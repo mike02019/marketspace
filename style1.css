@@ -7064,21 +7064,18 @@
     }
 }
 
-/* =======================================================
-   STORE SECTION IMAGE OVERRIDES (Full Width & Taller)
-   ======================================================= */
+/* ======================================================
+   STORE SECTION IMAGE FIX (Edge-to-Edge & Taller)
+   ====================================================== */
 
-/* 1. Adjust the Image Container Height & Remove Padding */
+/* 1. Reset Image Container to fill width */
 #store-detail-content .product-img {
-    height: 240px !important;
-    /* Increased from 150px/200px */
     padding: 0 !important;
-    /* Remove whitespace padding */
+    /* Removes white spacing around image */
     width: 100% !important;
-    flex-shrink: 0 !important;
-    /* Prevent image from shrinking */
-    background: #fff !important;
-    border-bottom: 1px solid #f0f0f0;
+    /* Forces full width */
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #eee;
 }
 
 /* 2. Force Image to Cover the Area */
@@ -7086,56 +7083,72 @@
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    /* "Cover" fills the box (crops edges) */
-    /* Use 'object-fit: contain' if you want to see the whole product 
-       but keep whitespace */
+    /* Ensures image fills the box without whitespace */
     border-radius: 8px 8px 0 0 !important;
-    /* Round top corners only */
+    /* Rounds top corners only */
 }
 
-/* 3. Compact the Content Area (To keep card height static) */
-#store-detail-content .product-content {
-    padding: 10px 12px !important;
-    /* Reduce padding to fit content */
-    justify-content: space-between;
-}
-
-/* 4. Adjust Text Sizes to fit in smaller space */
-#store-detail-content .product-name {
-    margin-bottom: 4px !important;
-    font-size: 0.95rem !important;
-    height: 24px !important;
-    /* Limit to 1 line visually */
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-#store-detail-content .product-category {
-    display: none !important;
-    /* Hide category to save space */
-}
-
-#store-detail-content .product-rating {
-    margin-bottom: 4px !important;
-    transform: scale(0.9);
-    /* Slightly shrink stars */
-    transform-origin: left;
-}
-
-#store-detail-content .product-price {
-    margin-bottom: 8px !important;
-}
-
-/* 5. Mobile Specific Adjustments */
-@media (max-width: 768px) {
-    #store-detail-content .product-card {
-        height: 380px !important;
-        /* Enforce fixed height */
+/* 3. DESKTOP: Increase Image Height & Adjust Content */
+@media (min-width: 769px) {
+    #store-detail-content .product-img {
+        height: 220px !important;
+        /* Increased from 180px */
     }
 
+    /* Compact content slightly so buttons don't get cut off */
+    #store-detail-content .product-content {
+        padding: 10px 12px !important;
+    }
+
+    #store-detail-content .product-name {
+        margin-bottom: 4px !important;
+    }
+
+    #store-detail-content .product-price {
+        margin: 4px 0 !important;
+    }
+}
+
+/* 4. MOBILE: Increase Image Height & Fix Layout */
+@media (max-width: 768px) {
     #store-detail-content .product-img {
-        height: 200px !important;
-        /* Slightly smaller on mobile but still big */
+        height: 180px !important;
+        /* Increased from ~140px */
+    }
+
+    #store-detail-content .product-content {
+        padding: 8px 8px !important;
+        /* Reduce padding to save space */
+    }
+
+    /* Ensure card flex layout works perfectly */
+    #store-detail-content .product-card {
+        display: flex !important;
+        flex-direction: column !important;
+        /* We keep height auto/min-height to ensure nothing is cut off */
+        height: auto !important;
+        min-height: 340px !important;
+    }
+
+    /* Make text take up less vertical space */
+    #store-detail-content .product-name {
+        font-size: 0.85rem !important;
+        height: 34px !important;
+        /* Strict height for 2 lines */
+        margin-bottom: 2px !important;
+    }
+
+    #store-detail-content .product-category {
+        margin-bottom: 4px !important;
+    }
+
+    #store-detail-content .product-price {
+        margin: 2px 0 6px 0 !important;
+    }
+
+    /* Ensure buttons stay at bottom */
+    #store-detail-content .product-actions {
+        margin-top: auto !important;
+        gap: 5px !important;
     }
 }
