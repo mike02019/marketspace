@@ -1,0 +1,162 @@
+Here is the full technical documentation for the MarketSpace website, derived from the provided source code.
+
+------------------------------------------------------------------------------------------------------------
+
+# MarketSpace – Technical Documentation
+
+## 1. Overview
+
+**MarketSpace** is a client-side rendered Single Page Application (SPA) serving as a multi-vendor e-commerce marketplace. It enables:
+
+* **Vendors** to create digital storefronts, manage inventory, and process orders.
+* **Customers** to browse products, chat directly with sellers for negotiation, and track orders in real-time.
+* **Administrators (Developers)** to oversee platform activity, approve stores, and manage verifications.
+
+The application uses **HTML5, CSS3, and Vanilla JavaScript**, relying on **Google Firebase** (Firestore & Auth) for the backend and database.
+
+---
+
+## 2. Architecture
+
+### 2.1 File Structure
+
+* **`index.html`**: The single entry point containing the skeletal structure for all views (Home, Store, Dashboard, etc.), modals, and navigation.
+* **`style.css`**: Core styling, CSS variables, typography, and base layout definitions.
+* **`style1.css`**: Specialized styling for mobile optimizations, complex animations (flip cards, loaders), receipt layouts, and developer dashboard responsiveness.
+* **`main.js`**: The primary logic controller handling routing, authentication, Firestore interactions, and UI rendering.
+* **`verification-system.js`**: A module dedicated to the vendor verification workflow (requesting and approving "Blue Tick" badges).
+
+### 2.2 Tech Stack
+
+* **Frontend**: Native JavaScript (ES6+), DOM Manipulation.
+* **Backend**: Google Firebase (Firestore NoSQL Database, Authentication).
+* **Email Services**:
+* **EmailJS**: For transactional order notifications to vendors and customers.
+* **Web3Forms**: For help center tickets and verification alerts.
+
+
+* **Utilities**: QR Server API (for store QR codes).
+
+---
+
+## 3. Core Logic & Routing
+
+### 3.1 SPA Navigation
+
+The app does not use standard page reloads. The `MapsTo(pageId, param)` function in `main.js`:
+
+1. Updates the browser URL using `history.pushState` (e.g., `?page=products`).
+2. Hides all `.page` containers.
+3. Displays the target ID (e.g., `#home-page`, `#store-admin-page`).
+4. Triggers specific data loaders (e.g., `loadAmazonProducts()` or `loadVendorDashboard()`).
+
+### 3.2 Role-Based Access Control (RBAC)
+
+User roles (`customer`, `vendor`, `developer`) are stored in the Firestore `users` collection.
+
+* **Global Guards**: Navigation functions check `currentUser` and `userRole` before rendering protected pages (e.g., Admin Dashboard).
+* **UI Adaptation**: The navigation bar and call-to-action buttons dynamically change based on the logged-in role.
+
+---
+
+## 4. Features & Functionality
+
+### 4.1 Customer Features
+
+* **Product Discovery**:
+* **Search**: Real-time filtering by name, category, and price.
+* **Compare Tray**: Allows side-by-side comparison of up to 3 products.
+* **Wishlist**: LocalStorage-backed wishlist that syncs to Firestore for analytics.
+
+
+* **Interaction**:
+* **Direct Chat**: Customers can initiate a chat context linked to specific products to negotiate prices.
+* **Reviews**: 5-star rating system with comments.
+
+
+* **Checkout**:
+* Supports "Cash on Delivery" and "Mobile Money".
+* Generates a unique Order ID and triggers email receipts.
+
+
+
+### 4.2 Vendor Features
+
+* **Store Management**:
+* **Dashboard**: Real-time stats (Revenue, Orders, Stock).
+* **Product CRUD**: Add, Edit, Delete products. Includes **client-side image compression** (via HTML Canvas) to optimize upload sizes.
+* **Store Customization**: Custom themes (color gradients or background images) and URL slugs.
+
+
+* **Order Fulfillment**:
+* View orders with status badges.
+* Mark items as Shipped/Delivered.
+
+
+* **Receipt Generator**: A tool to manually create and print PDF receipts for offline sales.
+* **Limits**: Default 30-product limit, upgradeable via "Unlimited Request" to Admin.
+
+### 4.3 Developer (Admin) Panel
+
+* **Access**: Secured via a hardcoded credential modal in addition to user role checks.
+* **Oversight**:
+* **Approvals**: Review and Approve/Reject new Store applications.
+* **Verifications**: Grant "Verified" badges to trusted vendors.
+* **User Management**: Delete users/stores (cascading deletion removes associated products and orders).
+
+
+
+---
+
+## 5. Database Schema (Firestore)
+
+| Collection | Document Structure Highlights | Purpose |
+| --- | --- | --- |
+| **users** | `{ name, email, role, createdAt }` | User profiles and role management. |
+| **stores** | `{ name, ownerId, slug, status, theme, isVerified }` | Storefront data and configuration. |
+| **products** | `{ name, price, storeId, category, imageUrl, quantity }` | Inventory data. |
+| **orders** | `{ orderId, customerId, vendorId, items[], status, total }` | Transaction records. |
+| **chats** | `{ participants[], lastMessage, unreadCount }` | Messaging metadata. |
+| **chats/{id}/messages** | `{ senderId, text, timestamp }` | Actual chat history. |
+| **verificationRequests** | `{ storeId, status, requestedAt }` | Logs for verification workflow. |
+
+---
+
+## 6. Styling & Responsiveness
+
+### 6.1 Design System
+
+* **Variables**: Defined in `:root` (e.g., `--primary: #2563eb`, `--success: #10b981`).
+* **Typography**: Uses 'Inter' for UI and 'Poppins' for headings.
+
+### 6.2 Mobile Optimizations (`style1.css`)
+
+* **Grid Transformations**: Product grids switch from 4 columns (Desktop) to 2 columns (Mobile).
+* **Table-to-Card**: In the Admin Dashboard, HTML tables are forced to display as block-level cards on mobile for readability.
+* **Touch Targets**: Buttons and inputs are sized for touch (min-height 48px).
+* **Sticky Elements**: Search bars and filters become sticky on mobile scroll.
+
+---
+
+## 7. Key Algorithms
+
+### 7.1 Image Compression
+
+Located in `main.js`, the `compressImage()` function reads a file input, draws it onto an HTML Canvas at a reduced resolution (max 800px), and exports it as a JPEG Base64 string (0.7 quality). This bypasses the need for complex cloud storage buckets for MVP.
+
+### 7.2 Offline Detection
+
+An event listener on `window` (`offline`/`online`) toggles a full-screen overlay (`#offline-overlay`), preventing user interaction when the internet connection is lost.
+
+### 7.3 News Ticker
+
+A CSS-based infinite scroll animation (`@keyframes ticker-scroll`) in the header that cycles through random products and generic deals ("Flash Sale", "Free Delivery").
+
+---
+
+## 8. External APIs & Keys
+
+* **Firebase Config**: Located at the top of `main.js`.
+* **EmailJS**
+* **Web3Forms**
+* **QR Code**

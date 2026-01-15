@@ -1,0 +1,2 @@
+The redirect issue has been resolved. When you refresh any page, it will now remain on the current page instead of redirecting to the home page. 
+I have left a `test.html` file in the project directory that you can use to verify this.
