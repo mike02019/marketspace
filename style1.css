@@ -92,6 +92,7 @@
         /* Hide on desktop */
     }
 }
+
 /* Loading state */
 .store-products-loading {
     grid-column: 1 / -1;
@@ -6886,8 +6887,10 @@
         /* Distinguish vendor tools */
     }
 }
+
 /* Mobile Fix for Verification Banner */
 @media (max-width: 768px) {
+
     /* Target the inner container of the verification card */
     #store-admin-page [style*="display: flex"] {
         flex-direction: column !important;
@@ -6896,18 +6899,19 @@
     }
 
     /* Make the button full-width on mobile */
-    #store-admin-page .btn-success, 
+    #store-admin-page .btn-success,
     #store-admin-page .btn-outline {
         width: 100% !important;
         margin-left: 0 !important;
         text-align: center;
     }
-    
+
     /* Ensure the text doesn't look cramped */
     #store-admin-page p {
         font-size: 0.85rem !important;
     }
 }
+
 /* Mobile responsive layout */
 @media (max-width: 600px) {
     .verification-content {
@@ -6920,6 +6924,7 @@
         margin-top: 10px;
     }
 }
+
 /* ======================================================
    DEVELOPER DASHBOARD MOBILE FIXES (Append to style1.css)
    ====================================================== */
@@ -6929,7 +6934,8 @@
     /* 1. Fix Main Container Padding */
     #developer-page .container {
         padding: 10px 15px !important;
-        overflow-x: hidden !important; /* Prevent horizontal scroll causing whitespace */
+        overflow-x: hidden !important;
+        /* Prevent horizontal scroll causing whitespace */
     }
 
     /* 2. Fix Stats Grid (2x2 Layout with smaller text) */
@@ -6949,22 +6955,24 @@
 
     #developer-page .dev-card h3 {
         font-size: 0.75rem !important;
-        white-space: normal !important; /* Allow wrapping */
+        white-space: normal !important;
+        /* Allow wrapping */
         height: auto !important;
     }
 
     #developer-page .dev-card p {
-        font-size: 1.5rem !important; /* Make numbers pop */
+        font-size: 1.5rem !important;
+        /* Make numbers pop */
     }
 
     /* 3. TRANSFORM ALL TABLES INTO CARDS (The Critical Fix) */
-    
+
     /* Force table elements to display as blocks */
-    #developer-page table, 
-    #developer-page thead, 
-    #developer-page tbody, 
-    #developer-page th, 
-    #developer-page td, 
+    #developer-page table,
+    #developer-page thead,
+    #developer-page tbody,
+    #developer-page th,
+    #developer-page td,
     #developer-page tr {
         display: block !important;
         width: 100% !important;
@@ -6985,7 +6993,7 @@
         border: 1px solid #e2e8f0 !important;
         border-radius: 12px !important;
         padding: 15px !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
     }
 
     /* Style the cells inside the card */
@@ -6995,7 +7003,8 @@
         position: relative !important;
         padding: 8px 0 !important;
         text-align: left !important;
-        word-break: break-word !important; /* Fix long words/emails cutting off */
+        word-break: break-word !important;
+        /* Fix long words/emails cutting off */
     }
 
     #developer-page td:last-child {
@@ -7012,8 +7021,10 @@
     }
 
     #developer-page .action-buttons button {
-        flex: 1 !important; /* Make buttons expand to fill space */
-        min-width: 45% !important; /* Ensure 2 buttons fit on one line */
+        flex: 1 !important;
+        /* Make buttons expand to fill space */
+        min-width: 45% !important;
+        /* Ensure 2 buttons fit on one line */
         padding: 10px !important;
         font-size: 0.85rem !important;
         height: auto !important;
@@ -7028,7 +7039,7 @@
     #developer-page details {
         width: 100% !important;
     }
-    
+
     #developer-page details p {
         white-space: normal !important;
         word-wrap: break-word !important;
@@ -7050,5 +7061,81 @@
         color: var(--primary) !important;
         border-bottom: 2px solid #e2e8f0 !important;
         margin-bottom: 8px !important;
+    }
+}
+
+/* =======================================================
+   STORE SECTION IMAGE OVERRIDES (Full Width & Taller)
+   ======================================================= */
+
+/* 1. Adjust the Image Container Height & Remove Padding */
+#store-detail-content .product-img {
+    height: 240px !important;
+    /* Increased from 150px/200px */
+    padding: 0 !important;
+    /* Remove whitespace padding */
+    width: 100% !important;
+    flex-shrink: 0 !important;
+    /* Prevent image from shrinking */
+    background: #fff !important;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* 2. Force Image to Cover the Area */
+#store-detail-content .product-img img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    /* "Cover" fills the box (crops edges) */
+    /* Use 'object-fit: contain' if you want to see the whole product 
+       but keep whitespace */
+    border-radius: 8px 8px 0 0 !important;
+    /* Round top corners only */
+}
+
+/* 3. Compact the Content Area (To keep card height static) */
+#store-detail-content .product-content {
+    padding: 10px 12px !important;
+    /* Reduce padding to fit content */
+    justify-content: space-between;
+}
+
+/* 4. Adjust Text Sizes to fit in smaller space */
+#store-detail-content .product-name {
+    margin-bottom: 4px !important;
+    font-size: 0.95rem !important;
+    height: 24px !important;
+    /* Limit to 1 line visually */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#store-detail-content .product-category {
+    display: none !important;
+    /* Hide category to save space */
+}
+
+#store-detail-content .product-rating {
+    margin-bottom: 4px !important;
+    transform: scale(0.9);
+    /* Slightly shrink stars */
+    transform-origin: left;
+}
+
+#store-detail-content .product-price {
+    margin-bottom: 8px !important;
+}
+
+/* 5. Mobile Specific Adjustments */
+@media (max-width: 768px) {
+    #store-detail-content .product-card {
+        height: 380px !important;
+        /* Enforce fixed height */
+    }
+
+    #store-detail-content .product-img {
+        height: 200px !important;
+        /* Slightly smaller on mobile but still big */
     }
 }
