@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="modello.logo.png" type="image/x-icon">
+    <title>Modello | Get a Quote</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <img src="modello.logo.png" alt="Modello">
+            </a>
+
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav id="main-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="team.html">Team</a></li>
+                    <li><a href="reviews.html">Reviews</a></li>
+                    <li><a href="careers.html">Careers</a></li>
+                    <li><a href="contact.html">Contact Us</a></li>
+                </ul>
+            </nav>
+
+            <!-- Add this inside the header-actions div in index.html -->
+            <div class="notification-indicator">
+                <a href="updates.html" class="notification-link" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </a>
+            </div>
+
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="booking-page">
+        <div class="section-header">
+            <h2>Book Your Cleaning</h2>
+            <p>Get a free, no-obligation quote in minutes.</p>
+        </div>
+        <div class="animation-container"
+            style="height: 50px; width: 300px; display: flex; justify-content: center; align-items: center; margin: 0 auto;">
+            <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module"></script>
+            <dotlottie-wc src="https://lottie.host/34e03938-1228-4713-9110-e1f2c90e3168/Z41xTmww8q.lottie"
+                style="width: 100%; max-width: 300px;" autoplay loop></dotlottie-wc>
+        </div>
+
+
+
+        <section class="section booking-form">
+            <div class="container">
+                <div class="form-container">
+                    <form id="booking-form" method="POST">
+
+                        <input type="hidden" name="access_key" value="f1f634c7-7979-433c-9ed6-4b537feea491">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="location">Site Location</label>
+                            <input type="address" id="location" name="location" required>
+                        </div>
+
+                        <div class="form-group" id="site-visit-group">
+                            <label>Site Visit Agreement</label>
+                            <div class="radio-group">
+                                <div class="radio-option">
+                                    <input type="radio" id="kumasi" name="site-visit" value="Within Kumasi(GH₵ 200)"
+                                        required>
+                                    <label for="kumasi">Within Kumasi (GH₵ 200)</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="ashanti" name="site-visit"
+                                        value="Anywhere In Ashanti Region Except Kumasi(GH₵ 600)">
+                                    <label for="ashanti">Anywhere In Ashanti Region Except Kumasi (GH₵ 600)</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="other-regions" name="site-visit"
+                                        value="Other Regions(GH₵ 1200)">
+                                    <label for="other-regions">Other Regions (GH₵ 1200)</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="other-country" name="site-visit"
+                                        value="Other Country Except Ghana($2000-$3500)">
+                                    <label for="other-country">Other Country Except Ghana ($2000-$3500)</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="service-type">Service Type</label>
+                            <select id="service-type" name="service-type" required>
+                                <option value="">-- Please select a service --</option>
+                                <option value="Cleaning - Domestic">All in One Cleaning (Domestic)</option>
+                                <option value="Cleaning - Industrial">All in One Cleaning (Commercial/ Industrial)
+                                </option>
+                                <option value="Cleaning - Apartment">All in One Cleaning (Apartment)</option>
+                                <option value="Cleaning - Event">All in One Cleaning (Event Services)</option>
+                                <option value="Cleaning - Sofa/Carpet">All in One Cleaning (Sofa & Carpet)</option>
+                                <option value="Cleaning - Mattress">All in One Cleaning (Mattress)</option>
+                                <option value="Pest Management (IPM)">Integrated Pest Management (IPM)</option>
+                                <option value="Horticultural">Horticultural & Outdoor Maintenance</option>
+                                <option value="AssetCare">AssetCare – building Repair & Management</option>
+                                <option value="Luxury Washroom">Luxury Washroom on Wheels</option>
+                                <option value="Other">Other (Please specify below)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="property-size">Property Size</label>
+                            <select id="property-size" name="property-size">
+                                <option value="">-- Select size --</option>
+                                <option value="small">Small (1-2 Bedrooms)</option>
+                                <option value="medium">Medium (3-4 Bedrooms)</option>
+                                <option value="large">Large (5+ Bedrooms)</option>
+                                <option value="commercial-sqft">Commercial (Please specify sqft below)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Preferred Date</label>
+                            <input type="date" id="date" name="date">
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Additional Details</label>
+                            <textarea id="message" name="message"
+                                placeholder="Tell us more about your needs, property size, or any special requests..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn">Submit Request <i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Modello Services</h3>
+                    <p>Premium building maintenance services for modern living. We deliver exceptional results with
+                        professional expertise and sustainable practices.</p>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/modelloghana/?_rdc=1&_rdr#"><i
+                                class="fab fa-facebook-f"></i></a>
+                        <a href="https://x.com/modelloghana"><i class="fab fa-twitter"></i></a>
+                        <a href="https://www.instagram.com/modelloghana/#"><i class="fab fa-instagram"></i></a>
+                        <a href=""><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="team.html">Team</a></li>
+                        <li><a href="reviews.html">Reviews</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                    </nav>
+
+                </div>
+                <div class="footer-column">
+                    <h3>Services</h3>
+                    <ul>
+                        <li><a href="services.html">Industrial Cleaning</a></li>
+                        <li><a href="services.html">Domestic/Commercial Cleaning</a></li>
+                        <li><a href="services.html">Apartment Cleaning</a></li>
+                        <li><a href="services.html">Sofa Cleaning</a></li>
+                        <li><a href="services.html">Mattress Cleaning</a></li>
+                        <li><a href="services.html">Carpet Cleaning</a></li>
+                        <li><a href="services.html">Pest Control & Fumigation Service</a></li>
+                        <li><a href="services.html">Gardening, Beautification & Landscaping Services</a>
+                        </li>
+                        <li><a href="services.html">Building Maintenance (Renovation Services)</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Ejisu-Kumasi road, Adako Jachie, Near Prefos Limited
+                        </li>
+                        <li><i class="fas fa-map-marker-alt"></i> Ahinsan, GCB Lane, Kumasi</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Ashaley Botwe, University Avenue, Accra</li>
+                        <li><i class="fas fa-phone"></i> +233 54 493 8851 / +233 24 168 8813</li>
+                        <li><i class="fas fa-envelope"></i> info@modellogh.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2018 Modello Building Maintenance Services. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Observe service cards and testimonial cards
+        document.addEventListener('DOMContentLoaded', () => {
+            const serviceCards = document.querySelectorAll('.service-card');
+            const testimonialCards = document.querySelectorAll('.testimonial-card');
+
+            serviceCards.forEach(card => {
+                observer.observe(card);
+            });
+
+            testimonialCards.forEach(card => {
+                observer.observe(card);
+            });
+
+            // --- START: NEW WEB3FORMS SCRIPT ---
+            const bookingForm = document.getElementById('booking-form');
+            if (bookingForm) {
+                const submitBtn = bookingForm.querySelector('button[type="submit"]');
+                const submitBtnHtml = submitBtn.innerHTML; // Save original button text
+
+                bookingForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    const accessKey = bookingForm.querySelector('input[name="access_key"]').value;
+                    if (!accessKey || accessKey === "YOUR_ACCESS_KEY_HERE") {
+                        alert("Form error: Access key is missing or not set.");
+                        return;
+                    }
+
+                    // Show a loading state
+                    submitBtn.innerHTML = 'Sending... <i class="fas fa-spinner fa-spin"></i>';
+                    submitBtn.disabled = true;
+
+                    const formData = new FormData(bookingForm);
+                    const object = Object.fromEntries(formData);
+                    const json = JSON.stringify(object);
+
+                    fetch('https://api.web3forms.com/submit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: json
+                    })
+                        .then(async (response) => {
+                            let jsonResponse = await response.json();
+                            if (response.status == 200) {
+                                alert('Success! Your booking request has been sent.');
+                                bookingForm.reset();
+                            } else {
+                                console.log(response);
+                                alert(`Error: ${jsonResponse.message}`);
+                            }
+                        })
+                        .catch(error => {
+                            console.log(error);
+                            alert('An error occurred while submitting the form.');
+                        })
+                        .finally(() => {
+                            // Reset button
+                            submitBtn.innerHTML = submitBtnHtml;
+                            submitBtn.disabled = false;
+                        });
+                });
+            }
+            // --- END: NEW WEB3FORMS SCRIPT ---
+
+            // Pre-select service type based on URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const serviceParam = urlParams.get('service');
+            if (serviceParam) {
+                const serviceSelect = document.getElementById('service-type');
+                serviceSelect.value = serviceParam;
+            }
+
+        }); // This is the closing tag for DOMContentLoaded
+    </script>
+</body>
+
+</html>

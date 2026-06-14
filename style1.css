@@ -3640,7 +3640,7 @@
     /* Slightly narrower cards */
     gap: 15px;
     /* Tighter gap */
-    padding: 20px 0;
+    padding: 20px;
 }
 
 /* Card Container */
@@ -4495,7 +4495,6 @@
     align-items: center;
     gap: 60px;
     padding: 80px 0;
-    margin-top: 40px;
     border-top: 1px solid #e2e8f0;
 }
 
@@ -5303,69 +5302,6 @@
     }
 }
 
-.hero h1 span {
-    display: inline-block;
-    opacity: 0;
-    /* Start invisible */
-    animation-duration: 1s;
-    animation-fill-mode: forwards;
-    /* Stay visible after animation */
-    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    /* Smooth ease out */
-}
-
-/* 1. SHOP ONLINE - Slides from Left */
-.hero-text-left {
-    animation-name: slideFromLeft;
-    animation-delay: 0.2s;
-}
-
-/* 2. SKIP THE LINE - Slides from Right */
-.hero-text-right {
-    animation-name: slideFromRight;
-    animation-delay: 0.6s;
-    /* Wait for first line */
-}
-
-/* 3. SELL ONLINE - Slides from Left (with longer delay) */
-.hero-text-left-delay {
-    animation-name: slideFromLeft;
-    animation-delay: 1.0s;
-    /* Wait for second line */
-}
-
-/* Animation Keyframes */
-@keyframes slideFromLeft {
-    0% {
-        transform: translateX(-100%);
-        /* Start far left */
-        opacity: 0;
-    }
-
-    100% {
-        transform: translateX(0);
-        /* End at center */
-        opacity: 1;
-    }
-}
-
-@keyframes slideFromRight {
-    0% {
-        transform: translateX(100%);
-        /* Start far right */
-        opacity: 0;
-    }
-
-    100% {
-        transform: translateX(0);
-        /* End at center */
-        opacity: 1;
-    }
-}
-
-/* =========================================
-   ABOUT SECTION TEXT EFFECTS
-   ========================================= */
 
 /* Base style for the heading */
 .about-animated-title {
@@ -5461,18 +5397,56 @@
 
 /* --- 3D Flip Card Styles --- */
 
-/* The Container */
+/* --- UPDATED FLIP CARD STYLES (Slideshow & Size Increase) --- */
+
+/* 1. Increase Card Height */
 .feature-card.flip-card {
-    background-color: transparent;
-    padding: 0;
-    /* Remove padding from container, move to faces */
-    perspective: 1000px;
-    /* Essential for 3D effect */
-    min-height: 320px;
-    /* REDUCED from 420px */
-    border: none;
-    box-shadow: none;
-    /* Shadow moves to the inner faces */
+    min-height: 400px !important;
+    /* Increased from 320px */
+}
+
+/* 2. Slideshow Container */
+.card-slideshow {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    /* Increased height for images */
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background-color: #f0f0f0;
+}
+
+/* 3. Slideshow Images */
+.card-slideshow img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    /* Smooth fade effect */
+    border-radius: 8px;
+}
+
+/* Class to show the current image */
+.card-slideshow img.active {
+    opacity: 1;
+    z-index: 1;
+}
+
+/* Adjust front face padding to accommodate larger images */
+.flip-card-front {
+    padding: 15px !important;
+    justify-content: flex-start;
+}
+
+.flip-card-front h3 {
+    font-size: 1.4rem !important;
+    /* Slightly larger text */
+    margin-top: 10px;
 }
 
 /* The Inner Container (This does the flipping) */
@@ -5518,7 +5492,7 @@
 
 .flip-card-front img {
     width: 100%;
-    height: 140px;
+    height: 200px;
     /* REDUCED from 200px */
     object-fit: cover;
     border-radius: 8px;
@@ -5938,7 +5912,7 @@
    Ensure only Logo and Drawer Button show
    ========================================= */
 
-@media (max-width: 1130px) {
+@media (max-width: 1189px) {
 
     /* 1. Hide everything in the main nav... */
     .main-nav>* {
@@ -5953,8 +5927,6 @@
     /* 3. ...And the Mobile Toggle Button (Drawer Button) */
     .main-nav>.mobile-nav-toggle {
         display: inline-flex !important;
-        align-items: center;
-        justify-content: center;
     }
 
     /* Ensure specific classes are definitely hidden */
@@ -5967,7 +5939,7 @@
     /* Adjust spacing for the remaining two elements */
     .main-nav {
         justify-content: space-between !important;
-        padding: 10px 20px !important;
+        padding: 10px 0px !important;
     }
 }
 
@@ -6502,10 +6474,11 @@
         transform: translateY(1px);
     }
 
-    /* 4. Page Numbers (Hide extra numbers on small mobile to prevent clutter) */
+    /* 4. Page Numbers - Styled for mobile (JS limits to 3 on mobile) */
     .products-pagination .page-numbers {
         display: flex;
         gap: 5px;
+        justify-content: center;
     }
 
     .products-pagination .page-number {
@@ -6516,6 +6489,7 @@
         justify-content: center;
         font-size: 0.95rem;
         border-radius: 6px;
+        flex-shrink: 0;
     }
 
     /* Hide non-active numbers on very small screens if needed */
@@ -6925,49 +6899,167 @@
     }
 }
 
-/* ======================================================
-   DEVELOPER DASHBOARD MOBILE FIXES (Append to style1.css)
-   ====================================================== */
+/* ========================================================================
+   ENHANCED DEVELOPER DASHBOARD - MOBILE OPTIMIZED & USER-FRIENDLY
+   ======================================================================== */
 
 @media (max-width: 768px) {
 
-    /* 1. Fix Main Container Padding */
+    /* ===== 1. MAIN CONTAINER - CLEAN SPACING ===== */
     #developer-page .container {
-        padding: 10px 15px !important;
+        padding: 15px !important;
+        max-width: 100% !important;
         overflow-x: hidden !important;
-        /* Prevent horizontal scroll causing whitespace */
     }
 
-    /* 2. Fix Stats Grid (2x2 Layout with smaller text) */
+    /* ===== 2. SECTION TITLE - ENHANCED VISIBILITY ===== */
+    #developer-page .section-title {
+        padding: 25px 20px !important;
+        margin-bottom: 25px !important;
+        background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+        border-radius: 12px !important;
+        text-align: center !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    #developer-page .section-title h2 {
+        font-size: 1.6rem !important;
+        color: white !important;
+        margin-bottom: 8px !important;
+        font-weight: 700 !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    #developer-page .section-title p {
+        font-size: 0.95rem !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        margin: 0 !important;
+    }
+
+    /* ===== 3. STATS GRID - ENHANCED 2x2 LAYOUT ===== */
     #developer-page .dev-panel-grid {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
+        gap: 12px !important;
+        margin-bottom: 30px !important;
     }
 
     #developer-page .dev-card {
-        padding: 15px 10px !important;
-        min-height: 110px !important;
+        padding: 20px 15px !important;
+        min-height: 120px !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        border: none !important;
+        position: relative !important;
+        overflow: hidden !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+
+    #developer-page .dev-card:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    /* Gradient accent bar at top of each card */
+    #developer-page .dev-card::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 4px !important;
+        background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
+    }
+
+    /* Color-coded accent bars for different cards */
+    #developer-page .dev-card:nth-child(1)::before {
+        background: linear-gradient(90deg, #3b82f6, #60a5fa) !important;
+    }
+
+    #developer-page .dev-card:nth-child(2)::before {
+        background: linear-gradient(90deg, #8b5cf6, #a78bfa) !important;
+    }
+
+    #developer-page .dev-card:nth-child(3)::before {
+        background: linear-gradient(90deg, #10b981, #34d399) !important;
+    }
+
+    #developer-page .dev-card:nth-child(4)::before {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24) !important;
     }
 
     #developer-page .dev-card h3 {
         font-size: 0.75rem !important;
+        margin-bottom: 12px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.8px !important;
+        color: var(--gray) !important;
+        font-weight: 700 !important;
         white-space: normal !important;
-        /* Allow wrapping */
-        height: auto !important;
+        line-height: 1.3 !important;
     }
 
     #developer-page .dev-card p {
-        font-size: 1.5rem !important;
-        /* Make numbers pop */
+        font-size: 2rem !important;
+        font-weight: 800 !important;
+        margin: 0 !important;
+        color: var(--dark) !important;
+        line-height: 1 !important;
     }
 
-    /* 3. TRANSFORM ALL TABLES INTO CARDS (The Critical Fix) */
+    /* Icon styling for System Status card */
+    #developer-page .dev-card .fa-check-circle {
+        font-size: 2.5rem !important;
+        margin-bottom: 10px !important;
+        display: block !important;
+    }
 
-    /* Force table elements to display as blocks */
+    /* ===== 4. SECTION CONTAINERS - ENHANCED CARDS ===== */
+    #developer-page>div[style*="margin-top"] {
+        margin: 0 0 25px 0 !important;
+        padding: 25px 18px !important;
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        border-left: 5px solid var(--primary) !important;
+    }
+
+    /* Different colors for different sections */
+    #developer-page>div[style*="border-left: 5px solid #f59e0b"] {
+        border-left: 5px solid #f59e0b !important;
+    }
+
+    #developer-page>div[style*="border-left: 5px solid #2563eb"] {
+        border-left: 5px solid #2563eb !important;
+    }
+
+    #developer-page>div[style*="border-left: 5px solid #10b981"] {
+        border-left: 5px solid #10b981 !important;
+    }
+
+    #developer-page h3 {
+        font-size: 1.25rem !important;
+        margin-bottom: 20px !important;
+        color: var(--dark) !important;
+        font-weight: 700 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding-bottom: 12px !important;
+        border-bottom: 2px solid #f1f5f9 !important;
+    }
+
+    #developer-page h3 i {
+        font-size: 1.4rem !important;
+    }
+
+    /* ===== 5. TABLES - MOBILE CARD LAYOUT ===== */
     #developer-page table,
     #developer-page thead,
     #developer-page tbody,
@@ -6979,88 +7071,305 @@
         box-sizing: border-box !important;
     }
 
-    /* Hide the table header row completely */
     #developer-page thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
     }
 
-    /* Style each row as a distinct "Card" */
-    #developer-page tr {
-        margin-bottom: 15px !important;
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
+    #developer-page tbody tr {
+        margin-bottom: 18px !important;
+        padding: 18px !important;
+        background: #f8fafc !important;
         border-radius: 12px !important;
-        padding: 15px !important;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+        border-left: 5px solid var(--primary) !important;
+        position: relative !important;
+        transition: all 0.2s ease !important;
     }
 
-    /* Style the cells inside the card */
+    #developer-page tbody tr:hover {
+        background: #f1f5f9 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        transform: translateY(-2px) !important;
+    }
+
     #developer-page td {
         border: none !important;
-        border-bottom: 1px solid #f1f5f9 !important;
-        position: relative !important;
-        padding: 8px 0 !important;
+        padding: 12px 0 !important;
         text-align: left !important;
+        position: relative !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        font-size: 0.9rem !important;
         word-break: break-word !important;
-        /* Fix long words/emails cutting off */
     }
 
     #developer-page td:last-child {
         border-bottom: none !important;
+        padding-bottom: 0 !important;
     }
 
-    /* 4. Fix Action Buttons inside the cards */
+    /* Add labels before each cell for clarity */
+    #developer-page td::before {
+        content: attr(data-label) !important;
+        display: block !important;
+        font-weight: 700 !important;
+        color: var(--gray) !important;
+        font-size: 0.7rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.8px !important;
+        margin-bottom: 6px !important;
+    }
+
+    /* Store name - prominent display */
+    #developer-page td:nth-of-type(1) {
+        font-weight: 700 !important;
+        font-size: 1.15rem !important;
+        color: var(--dark) !important;
+        margin-bottom: 10px !important;
+        padding-bottom: 15px !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+    }
+
+    /* ===== 6. ACTION BUTTONS - IMPROVED LAYOUT ===== */
     #developer-page .action-buttons {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 8px !important;
-        margin-top: 10px !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        margin-top: 15px !important;
         width: 100% !important;
     }
 
     #developer-page .action-buttons button {
-        flex: 1 !important;
-        /* Make buttons expand to fill space */
-        min-width: 45% !important;
-        /* Ensure 2 buttons fit on one line */
-        padding: 10px !important;
+        width: 100% !important;
+        padding: 12px 10px !important;
         font-size: 0.85rem !important;
-        height: auto !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 5px !important;
+        gap: 6px !important;
     }
 
-    /* 5. Specific Fix for "Unlimited Requests" & "Verification" Sections */
-    /* Ensure the details/reason text wraps properly */
+    #developer-page .action-buttons button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* Full-width buttons for single actions */
+    #developer-page .action-buttons button:only-child {
+        grid-column: 1 / -1 !important;
+    }
+
+    /* ===== 7. STATUS BADGES - ENHANCED VISIBILITY ===== */
+    #developer-page .store-status,
+    #developer-page [style*="padding: 5px 15px"] {
+        display: inline-block !important;
+        padding: 8px 14px !important;
+        border-radius: 20px !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    /* ===== 8. DETAILS/SUMMARY ELEMENTS ===== */
     #developer-page details {
         width: 100% !important;
+        margin-top: 12px !important;
+        background: white !important;
+        padding: 15px !important;
+        border-radius: 10px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    #developer-page details summary {
+        cursor: pointer !important;
+        font-weight: 700 !important;
+        color: var(--primary) !important;
+        font-size: 0.9rem !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    #developer-page details summary::marker {
+        color: var(--primary) !important;
     }
 
     #developer-page details p {
         white-space: normal !important;
         word-wrap: break-word !important;
+        margin-top: 12px !important;
+        padding-top: 12px !important;
+        border-top: 1px solid #e2e8f0 !important;
+        color: var(--gray) !important;
+        line-height: 1.6 !important;
+        font-size: 0.9rem !important;
     }
 
-    /* 6. Typography Fixes */
+    /* ===== 9. LOADING STATES ===== */
+    #developer-page .spinner {
+        margin: 30px auto !important;
+    }
+
+    /* ===== 10. EMPTY STATES ===== */
+    #developer-page p:only-child {
+        text-align: center !important;
+        padding: 40px 20px !important;
+        color: var(--gray) !important;
+        font-size: 0.95rem !important;
+        background: #f8fafc !important;
+        border-radius: 10px !important;
+    }
+
+    /* ===== 11. IMPROVED TYPOGRAPHY ===== */
+    #developer-page {
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+    }
+
+    /* ===== 12. BETTER SPACING BETWEEN SECTIONS ===== */
+    #developer-page>div+div {
+        margin-top: 25px !important;
+    }
+
+    /* ===== 13. SCROLLABLE CONTAINERS ===== */
+    #developer-page>div {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* ========================================================================
+   EXTRA SMALL SCREENS - OPTIMIZED FOR SMALL MOBILE PHONES
+   ======================================================================== */
+
+@media (max-width: 480px) {
+
+    /* Reduce padding for smaller screens */
+    #developer-page .container {
+        padding: 12px !important;
+    }
+
+    /* Smaller section title */
+    #developer-page .section-title {
+        padding: 20px 15px !important;
+        margin-bottom: 20px !important;
+    }
+
+    #developer-page .section-title h2 {
+        font-size: 1.4rem !important;
+    }
+
+    #developer-page .section-title p {
+        font-size: 0.85rem !important;
+    }
+
+    /* Single column layout for stats on very small screens */
+    #developer-page .dev-panel-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    #developer-page .dev-card {
+        min-height: 100px !important;
+        padding: 18px 15px !important;
+    }
+
+    #developer-page .dev-card h3 {
+        font-size: 0.7rem !important;
+    }
+
+    #developer-page .dev-card p {
+        font-size: 1.8rem !important;
+    }
+
+    /* Smaller section containers */
+    #developer-page>div[style*="margin-top"] {
+        padding: 20px 15px !important;
+        margin-bottom: 20px !important;
+    }
+
     #developer-page h3 {
         font-size: 1.1rem !important;
-        margin-top: 20px !important;
-        padding: 10px !important;
-        background: #f8fafc !important;
-        border-radius: 8px !important;
+        margin-bottom: 15px !important;
     }
 
-    /* Make Store Names bold in the card view */
+    /* Smaller table cards */
+    #developer-page tbody tr {
+        padding: 15px !important;
+        margin-bottom: 15px !important;
+    }
+
+    #developer-page td {
+        padding: 10px 0 !important;
+        font-size: 0.85rem !important;
+    }
+
     #developer-page td:nth-of-type(1) {
-        font-weight: 700 !important;
-        font-size: 1.1rem !important;
-        color: var(--primary) !important;
-        border-bottom: 2px solid #e2e8f0 !important;
-        margin-bottom: 8px !important;
+        font-size: 1.05rem !important;
+    }
+
+    /* Stack action buttons vertically on very small screens */
+    #developer-page .action-buttons {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+
+    #developer-page .action-buttons button {
+        padding: 11px 10px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Smaller details elements */
+    #developer-page details {
+        padding: 12px !important;
+    }
+
+    #developer-page details summary {
+        font-size: 0.85rem !important;
+    }
+
+    #developer-page details p {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* ========================================================================
+   LANDSCAPE MODE OPTIMIZATION FOR MOBILE
+   ======================================================================== */
+
+@media (max-width: 768px) and (orientation: landscape) {
+
+    /* Keep 2x2 grid in landscape mode */
+    #developer-page .dev-panel-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Reduce vertical padding in landscape */
+    #developer-page .section-title {
+        padding: 18px 20px !important;
+    }
+
+    #developer-page .dev-card {
+        min-height: 100px !important;
+        padding: 15px 12px !important;
+    }
+
+    #developer-page>div[style*="margin-top"] {
+        padding: 20px 15px !important;
+    }
+
+    /* Keep action buttons in 2-column grid */
+    #developer-page .action-buttons {
+        grid-template-columns: 1fr 1fr !important;
     }
 }
 
@@ -7150,5 +7459,72 @@
     #store-detail-content .product-actions {
         margin-top: auto !important;
         gap: 5px !important;
+    }
+}
+
+/* ======================================================
+   MOBILE STORE GRID: ABSOLUTE FULL-WIDTH (0 MARGINS)
+   ====================================================== */
+
+@media (max-width: 768px) {
+
+    /* 1. Remove all padding from the main store detail container */
+    #store-detail-content {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden;
+    }
+
+    /* 2. Force the grid to touch the screen edges */
+    #store-detail-content .products-grid {
+
+        margin: 0 !important;
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        /* Perfect 2-column split */
+    }
+
+    /* 3. Product Card adjustments for Edge-to-Edge look */
+    #store-detail-content .product-card {
+        /* Square corners look better on full-width */
+        margin: 0 !important;
+        border: none !important;
+        border-bottom: 1px solid #eee !important;
+        /* Simple bottom divider */
+        box-shadow: none !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: 360px !important;
+    }
+
+    /* 4. Image Height & Coverage */
+    #store-detail-content .product-img {
+        padding: 0 !important;
+        height: 200px !important;
+        /* Taller image as requested */
+        width: 100% !important;
+        background-color: #fff !important;
+    }
+
+    #store-detail-content .product-img img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        /* Fills the container completely */
+        border-radius: 0 !important;
+    }
+
+    /* 5. Content Padding (So text doesn't touch the glass) */
+    #store-detail-content .product-content {
+        padding: 12px 10px !important;
+    }
+
+    /* Ensure action buttons take full width inside the card */
+    #store-detail-content .product-actions {
+        padding: 0 10px 12px 10px !important;
     }
 }

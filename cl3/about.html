@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="modello.logo.png" type="image/x-icon">
+    <title>Modello | About Us</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --primary-dark: #2667cc;
+            --secondary: #ff006e;
+            --accent: #8338ec;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --white: #ffffff;
+            --gradient: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --border-radius: 16px;
+            --max-width: 1400px;
+        }
+
+        .dark-theme {
+            --light: #121212;
+            --dark: #f8f9fa;
+            --gray: #adb5bd;
+            --light-gray: #2d2d2d;
+            --white: #1e1e1e;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.7;
+            color: var(--dark);
+            background-color: var(--light);
+            overflow-x: hidden;
+            transition: var(--transition);
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .container {
+            width: 90%;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: var(--gradient);
+            transition: var(--transition);
+            z-index: -1;
+        }
+
+        .btn:hover::before {
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(58, 134, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 15px 30px rgba(255, 0, 110, 0.3);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            color: var(--white);
+        }
+
+        .section {
+            padding: 6rem 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-header h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--gradient);
+            border-radius: 2px;
+        }
+
+        .section-header p {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Page Header (for sub-pages) */
+        .page-header {
+            padding: 10rem 0 5rem;
+            background: var(--gradient);
+            text-align: center;
+            color: var(--white);
+        }
+
+        .page-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .dark-theme header {
+            background-color: rgba(30, 30, 30, 0.95);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .logo span {
+            color: var(--secondary);
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--accent);
+        }
+
+        nav ul {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        nav a {
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient);
+            transition: var(--transition);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--dark);
+            cursor: pointer;
+            transition: var(--transition);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--light-gray);
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--primary);
+            color: var(--white);
+            transform: rotate(30deg);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark);
+            cursor: pointer;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--light-gray);
+            transition: var(--transition);
+        }
+
+        .mobile-menu-btn:hover {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            background: linear-gradient(180deg, rgba(250, 250, 250, 1), rgba(245, 245, 245, 1));
+            color: var(--dark);
+        }
+
+        .page-header h1 {
+            margin: 0.25rem 0 0.5rem;
+            font-size: 2.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        /* About Content */
+        .about-content {
+            margin-top: 1.5rem;
+            overflow: hidden;
+            /* Clear floats */
+        }
+
+        .about-text {
+            margin-bottom: 1.5rem;
+        }
+
+        .about-text h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .about-text p {
+            margin-bottom: 1rem;
+        }
+
+        .about-image {
+            float: left;
+            width: 420px;
+            margin: 0 2rem 1rem 0;
+            shape-outside: margin-box;
+        }
+
+        .about-image img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Features Section */
+        .features {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            clear: both;
+            /* Ensure features start below the floated image */
+            margin-top: 1.5rem;
+        }
+
+        .features .feature {
+            display: flex;
+            gap: 1rem;
+            background: rgba(58, 134, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .features .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background: #f2f4f7;
+            border-radius: 8px;
+            color: #3a86ff;
+            flex-shrink: 0;
+        }
+
+        .dark-theme .feature-icon {
+            background: rgba(58, 134, 255, 0.2);
+        }
+
+        .feature-text h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        /* Stats Section */
+        .stats {
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 1.25rem;
+        }
+
+        .stat {
+            background: #fafafa;
+            padding: 1.5rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1 1 120px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+        }
+
+        .dark-theme .stat {
+            background: rgba(58, 134, 255, 0.1);
+        }
+
+        .stat:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            display: block;
+            font-weight: 700;
+            font-size: 1.75rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* CTA Section */
+        .cta {
+            text-align: center;
+            padding: 3rem 0;
+            margin-top: 2rem;
+            background: linear-gradient(135deg, rgba(58, 134, 255, 0.1), rgba(131, 56, 236, 0.1));
+        }
+
+        .cta h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .cta p {
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(58, 134, 255, 0.3);
+        }
+
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(131, 56, 236, 0.3);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: var(--light);
+            padding: 5rem 0 2rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-column h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background: var(--gradient);
+        }
+
+        .footer-column ul li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-column a {
+            color: var(--gray);
+            transition: var(--transition);
+        }
+
+        .footer-column a:hover {
+            color: var(--white);
+            padding-left: 5px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            background: var(--gradient);
+            transform: translateY(-5px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .about-image {
+                width: 350px;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            nav {
+                position: fixed;
+                top: 70px;
+                left: 0;
+                width: 100%;
+                background: var(--light);
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: var(--transition);
+            }
+
+            nav.active {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+
+            nav ul {
+                flex-direction: column;
+                padding: 2rem;
+                gap: 1.5rem;
+            }
+
+            .about-image {
+                float: none;
+                width: 100%;
+                margin: 0 0 1.5rem 0;
+            }
+
+            .about-content {
+                margin-top: 1.5rem;
+            }
+
+            .page-header h1 {
+                font-size: 1.75rem;
+            }
+
+            .features {
+                margin-top: 0;
+            }
+
+            .features .feature {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .feature-icon {
+                align-self: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats {
+                flex-direction: column;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .notification-indicator {
+            position: relative;
+            margin-right: 1rem;
+        }
+
+        .notification-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background-color: var(--light-gray);
+            color: var(--dark);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .notification-link:hover {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--secondary);
+            color: var(--white);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <img src="modello.logo.png" alt="Modello">
+            </a>
+
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav id="main-nav">
+                <ul>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="team.html">Team</a></li>
+                        <li><a href="reviews.html">Reviews</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+            </nav>
+
+            <!-- Add this inside the header-actions div in index.html -->
+            <div class="notification-indicator">
+                <a href="updates.html" class="notification-link" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </a>
+            </div>
+
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    <main>
+        <section class="section about">
+            <div class="container">
+                <div class="about-content">
+                    <div class="about-text">
+                        <h2>About Us</h2>
+                        <p><strong>Why Choose Us?</strong></p>
+
+                        <!-- This paragraph will appear above the image -->
+                        <p>Modello Services is a building maintenance company that was established in 2018. We pay
+                            royalties to Modello and Gem Limited, considered one of the leading fabric and PVC vinyl
+                            faux leather wholesale providers in Ghana, West Africa.</p>
+
+                        <div class="about-image">
+                            <img src="https://www.shutterstock.com/image-photo/african-janitor-woman-cleaning-office-600nw-1969865191.jpg"
+                                alt="Modello professional team">
+                        </div>
+
+                        <!-- This paragraph will wrap beside the image -->
+                        <p>The core value of our company is to bring convenience to customers and clients while ensuring
+                            they get value for services. Out of this company, sub-departments were formed to properly
+                            map out and tackle each societal assistance with great professionalism and skills.</p>
+
+                        <p>As Marketing Lead at Modello Services, Mr. Samuel Andoh drives the company’s brand growth and
+                            client engagement strategies. He oversees promotional campaigns, digital presence, and
+                            client relationship initiatives that strengthen Modello’s position as a trusted name in
+                            cleaning and building maintenance.
+
+                        </p>
+
+                        <p>
+                            With a results-driven approach and a deep understanding of customer behavior, Mr. Andoh
+                            ensures that every marketing effort reflects Modello’s core values of excellence,
+                            reliability, and innovation. His creativity and strategic insight continue to expand the
+                            company’s reach across Ghana’s cleaning and maintenance industry.</p>
+
+                        <!-- The rest of the content will flow below the image -->
+                        <div class="features">
+                            <div class="feature">
+                                <div class="feature-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="feature-text">
+                                    <h4>VISION STATEMENT</h4>
+                                    <p>The company envisions a future where every home, office, garden, and industrial
+                                        facility reflects its dedication to excellence and environmental
+                                        responsibility.</p>
+                                    <p>This vision is grounded in the belief that the beauty and functionality of spaces
+                                        can greatly enhance the quality of life, making them a source of pride, comfort,
+                                        and inspiration. Aspiring to be the industry leader in sanitation and property
+                                        maintenance services, Modello Services is focused on setting new benchmarks in
+                                        service excellence.</p>
+                                    <p>The company aims to transform environments into pristine havens, thereby creating
+                                        a cleaner, safer, and more organized world. Through its efforts, Modello
+                                        Services seeks to establish a legacy of enhanced living spaces for current and
+                                        future generations, inviting everyone to join in its mission towards a cleaner
+                                        and more vibrant future in Ghana and West Africa.</p>
+                                </div>
+                            </div>
+                            <div class="feature">
+                                <div class="feature-icon">
+                                    <i class="fas fa-bullseye"></i>
+                                </div>
+                                <div class="feature-text">
+                                    <h4>MISSION STATEMENT</h4>
+                                    <p>We are committed to delivering excellence in every aspect of our work, from
+                                        pristine cleaning services to meticulous property maintenance, from creating
+                                        beautiful, sustainable landscapes to providing pest-free environments. Our
+                                        mission is to create spaces that radiate cleanliness, safety, and harmony.</p>
+                                    <p>With unwavering dedication to quality, sustainability, and customer satisfaction,
+                                        we aim to be the trusted partner you rely on for a cleaner, well-maintained
+                                        life. We're driven by a vision of a Ghana and West Africa where every space,
+                                        from homes to industrial facilities, reflects our commitment to excellence.</p>
+                                    <p>Join us in this mission towards a cleaner, safer, and more vibrant future across
+                                        Ghana and West Africa. Choose Modello Services, and together, let's make
+                                        cleanliness and well maintained spaces the norm, not the exception.
+
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stats">
+                            <div class="stat">
+                                <span class="stat-number">5+</span>
+                                <span class="stat-text">Years Experience</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number">1000+</span>
+                                <span class="stat-text">Projects Completed</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number">98%</span>
+                                <span class="stat-text">Satisfaction Rate</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="container">
+                <h2>Join Our Mission</h2>
+                <p>Join us in this mission towards a cleaner, safer, and more vibrant future across Ghana and West
+                    Africa. Choose Modello Services, and together, let's make cleanliness and well maintained spaces the
+                    norm, not the exception.</p>
+                <a href="contact.html" class="btn">Contact Us Today <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Modello Services</h3>
+                    <p>Premium building maintenance services for modern living. We deliver exceptional results with
+                        professional expertise and sustainable practices.</p>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/modelloghana/?_rdc=1&_rdr#"><i
+                                class="fab fa-facebook-f"></i></a>
+                        <a href="https://x.com/modelloghana"><i class="fab fa-twitter"></i></a>
+                        <a href="https://www.instagram.com/modelloghana/#"><i class="fab fa-instagram"></i></a>
+                        <a href=""><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="team.html">Team</a></li>
+                        <li><a href="reviews.html">Reviews</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                    </nav>
+
+                </div>
+                <div class="footer-column">
+                    <h3>Services</h3>
+                    <ul>
+                        <li><a href="services.html">Industrial Cleaning</a></li>
+                        <li><a href="services.html">Domestic/Commercial Cleaning</a></li>
+                        <li><a href="services.html">Apartment Cleaning</a></li>
+                        <li><a href="services.html">Sofa Cleaning</a></li>
+                        <li><a href="services.html">Mattress Cleaning</a></li>
+                        <li><a href="services.html">Carpet Cleaning</a></li>
+                        <li><a href="services.html">Pest Control & Fumigation Service</a></li>
+                        <li><a href="services.html">Gardening, Beautification & Landscaping Services</a>
+                        </li>
+                        <li><a href="services.html">Building Maintenance (Renovation Services)</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Ejisu-Kumasi road, Adako Jachie, Near Prefos Limited
+                        </li>
+                        <li><i class="fas fa-map-marker-alt"></i> Ahinsan, GCB Lane, Kumasi</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Ashaley Botwe, University Avenue, Accra</li>
+                        <li><i class="fas fa-phone"></i> +233 54 493 8851 / +233 24 168 8813</li>
+                        <li><i class="fas fa-envelope"></i> info@modellogh.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2018 Modello Building Maintenance Services. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mainNav = document.getElementById('main-nav');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mainNav.classList.toggle('active');
+        });
+
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = themeToggle.querySelector('i');
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+
+            if (document.body.classList.contains('dark-theme')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            }
+        });
+
+        // Close mobile menu when clicking on a link
+        const navLinks = document.querySelectorAll('nav a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mainNav.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+
+</html>

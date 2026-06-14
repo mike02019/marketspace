@@ -24,14 +24,65 @@ const CURRENCY_SYMBOLS = {
 // --- Helper Function for Currency Display ---
 function formatCurrency(price, currency) {
     const symbol = CURRENCY_SYMBOLS[currency] || currency;
-    return `${symbol}${parseFloat(price).toFixed(2)}`;
+    const numericValue = parseFloat(price).toFixed(2);
+    const [wholePart, decimalPart] = numericValue.split('.');
+    const formattedWhole = parseInt(wholePart).toLocaleString('en-US');
+    // Only add decimal part if it's not .00
+    return decimalPart === '00' ? `${symbol}${formattedWhole}` : `${symbol}${formattedWhole}.${decimalPart}`;
+}
+
+// --- PERFORMANCE OPTIMIZATION UTILITIES ---
+// Debounce function to prevent excessive function calls during rapid input
+function debounce(func, delay = 300) {
+    let timeoutId;
+    return function debounced(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// Throttle function to limit execution frequency
+function throttle(func, limit = 300) {
+    let inThrottle;
+    return function throttled(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+// Request Animation Frame batch updates for smoother rendering
+function batchDOMUpdates(callback) {
+    if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(callback);
+    } else {
+        setTimeout(callback, 16); // ~60fps fallback
+    }
+}
+
+// Polyfill for requestIdleCallback on older browsers
+if (typeof window.requestIdleCallback === 'undefined') {
+    window.requestIdleCallback = function (callback) {
+        return setTimeout(callback, 1);
+    };
 }
 
 
 // --- Store URL Generation ---
 function generateStoreUrl(storeSlug) {
     const baseUrl = window.location.origin; // Gets current website URL
-    return `${baseUrl}/?store=${storeSlug}`;
+    return `${baseUrl}/?page=store-detail&store=${storeSlug}`;
+}
+
+function viewMyStore() {
+    if (currentStoreData && currentStoreData.slug) {
+        const storeUrl = generateStoreUrl(currentStoreData.slug);
+        window.open(storeUrl, '_blank');
+    } else {
+        showNotification('Store data is not loaded yet. Please try again in a moment.', 'error');
+    }
 }
 
 // Copy store URL to clipboard
@@ -243,267 +294,28 @@ let currentStoreData = null;
 let selectedRegTheme = 'primary';
 // Client-side cache for stores to enable instant searching/filtering
 let storesCache = [];
-// Products pagination state (client-side)
-let productsListAll = []; // full list from Firestore
-let productsList = []; // filtered list used for rendering
-let currentProductsPage = 1;
-let rowsPerPage = 4; // default: show 4 rows per page
+// NOTE: Products, cart, and wishlist state moved to dedicated modules
+// - productsListAll, productsList, currentProductsPage, _productFiltersInitialized (products.js)
+// - shoppingCart, wishlist (cart.js)
+// - compareList (cart.js)
 
-// Filter initialization flag
-let _productFiltersInitialized = false;
+// Filter initialization flag is now in products.js
 
 // --- CHAT SYSTEM VARIABLES ---
 let activeChatId = null;
 let chatUnsubscribe = null; // Listener for active conversation
 let inboxUnsubscribe = null; // Listener for inbox list
 
-// --- Shopping Cart State ---
-let shoppingCart = {}; // Structure: { storeId: { productId: { productData, quantity } } }
+// --- SHOPPING CART FUNCTIONS ---
+// All shopping cart, wishlist, and cart UI functions have been moved to js/cart.js
+// Functions available globally: 
+// - initializeCart(), initializeWishlist(), saveCart(), saveWishlist()
+// - addToCart(), removeFromCart(), updateCartQuantity()
+// - moveToWishlist(), moveToCart(), removeFromWishlist()
+// - clearStoreCart(), getStoreCartTotal(), getTotalCartCount()
+// - toggleCompare(), compareProducts(), clearCompareList()
+// Other cart-related functions: renderCartPage(), renderCartSidebar(), checkoutCart()
 
-// --- Wishlist State ---
-let wishlist = {}; // Structure: { storeId: { productId: { productData } } }
-
-// --- Shopping Cart Functions ---
-
-// Initialize cart from localStorage for logged-in customers
-function initializeCart() {
-    if (currentUser && userRole === 'customer') {
-        const savedCart = localStorage.getItem(`cart_${currentUser.uid}`);
-        if (savedCart) {
-            try {
-                shoppingCart = JSON.parse(savedCart);
-            } catch (e) {
-                console.error('Error loading cart from localStorage:', e);
-                shoppingCart = {};
-            }
-        }
-        // NEW: Load Wishlist as well
-        initializeWishlist();
-    } else {
-        shoppingCart = {};
-        wishlist = {};
-    }
-    updateCartUI();
-}
-
-// Initialize wishlist from localStorage
-function initializeWishlist() {
-    if (currentUser && userRole === 'customer') {
-        const savedList = localStorage.getItem(`wishlist_${currentUser.uid}`);
-        if (savedList) {
-            try {
-                wishlist = JSON.parse(savedList);
-            } catch (e) {
-                console.error('Error loading wishlist:', e);
-                wishlist = {};
-            }
-        }
-    } else {
-        wishlist = {};
-    }
-}
-
-// Save wishlist to localStorage AND Firestore (for analytics)
-function saveWishlist() {
-    if (currentUser && userRole === 'customer') {
-        // 1. Local Storage for fast UI
-        localStorage.setItem(`wishlist_${currentUser.uid}`, JSON.stringify(wishlist));
-
-        // 2. Sync to Firestore (Data Analysis)
-        // This allows you to see what users want but haven't bought yet
-        db.collection('users').doc(currentUser.uid).collection('analytics').doc('wishlist').set({
-            items: wishlist,
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-    }
-}
-
-// Move Item: Cart -> Wishlist
-function moveToWishlist(productId, storeId) {
-    if (!shoppingCart[storeId] || !shoppingCart[storeId][productId]) return;
-
-    // Get item data
-    const item = shoppingCart[storeId][productId];
-
-    // Initialize store in wishlist if needed
-    if (!wishlist[storeId]) wishlist[storeId] = {};
-
-    // Add to wishlist
-    wishlist[storeId][productId] = item;
-
-    // Remove from Cart
-    delete shoppingCart[storeId][productId];
-    if (Object.keys(shoppingCart[storeId]).length === 0) {
-        delete shoppingCart[storeId];
-    }
-
-    // Save States
-    saveCart();
-    saveWishlist();
-
-    // Refresh UI
-    renderCartPage();
-    showNotification('Item saved for later');
-}
-
-// Move Item: Wishlist -> Cart
-function moveToCart(productId, storeId) {
-    if (!wishlist[storeId] || !wishlist[storeId][productId]) return;
-
-    const item = wishlist[storeId][productId];
-
-    // Add to Cart (using existing logic)
-    // We set quantity to 1 when moving back to cart
-    if (!shoppingCart[storeId]) shoppingCart[storeId] = {};
-
-    if (shoppingCart[storeId][productId]) {
-        shoppingCart[storeId][productId].quantity += 1;
-    } else {
-        shoppingCart[storeId][productId] = { ...item, quantity: 1 };
-    }
-
-    // Remove from Wishlist
-    delete wishlist[storeId][productId];
-    if (Object.keys(wishlist[storeId]).length === 0) {
-        delete wishlist[storeId];
-    }
-
-    // Save States
-    saveCart();
-    saveWishlist();
-
-    // Refresh UI
-    renderCartPage();
-    showNotification('Moved back to cart');
-}
-
-// Remove from Wishlist completely
-function removeFromWishlist(productId, storeId) {
-    if (wishlist[storeId] && wishlist[storeId][productId]) {
-        delete wishlist[storeId][productId];
-        if (Object.keys(wishlist[storeId]).length === 0) {
-            delete wishlist[storeId];
-        }
-        saveWishlist();
-        renderCartPage();
-        showNotification('Removed from saved items');
-    }
-}
-
-// Save cart to localStorage
-function saveCart() {
-    if (currentUser && userRole === 'customer') {
-        localStorage.setItem(`cart_${currentUser.uid}`, JSON.stringify(shoppingCart));
-    }
-}
-
-// Add product to cart
-function addToCart(productId, storeId, productData) {
-    if (!currentUser || userRole !== 'customer') {
-        showNotification('Please log in as a customer to add items to cart.');
-        return;
-    }
-
-    // Initialize store cart if it doesn't exist
-    if (!shoppingCart[storeId]) {
-        shoppingCart[storeId] = {};
-    }
-
-    // Add or update product in cart
-    if (shoppingCart[storeId][productId]) {
-        shoppingCart[storeId][productId].quantity += 1;
-    } else {
-        shoppingCart[storeId][productId] = {
-            ...productData,
-            quantity: 1
-        };
-    }
-
-    saveCart();
-    updateCartUI();
-    showNotification(`Added ${productData.name} to cart!`);
-}
-
-// Remove product from cart
-function removeFromCart(productId, storeId) {
-    if (shoppingCart[storeId] && shoppingCart[storeId][productId]) {
-        delete shoppingCart[storeId][productId];
-
-        // Remove store cart if empty
-        if (Object.keys(shoppingCart[storeId]).length === 0) {
-            delete shoppingCart[storeId];
-        }
-
-        saveCart();
-        updateCartUI();
-        showNotification('Item removed from cart.');
-
-        // Re-render cart page if currently viewing cart
-        if (document.getElementById('cart-page') && document.getElementById('cart-page').classList.contains('active')) {
-            renderCartPage();
-        }
-    }
-}
-
-// Update product quantity in cart
-function updateCartQuantity(productId, storeId, newQuantity) {
-    if (newQuantity <= 0) {
-        removeFromCart(productId, storeId);
-        return;
-    }
-
-    if (shoppingCart[storeId] && shoppingCart[storeId][productId]) {
-        shoppingCart[storeId][productId].quantity = newQuantity;
-        saveCart();
-        updateCartUI();
-
-        // ADD THIS: Refresh the UI if the user is on the cart page or sidebar
-        if (document.getElementById('cart-page') && document.getElementById('cart-page').classList.contains('active')) {
-            renderCartPage();
-        }
-
-        // Also refresh sidebar if it's currently open
-        if (document.getElementById('cart-sidebar') && document.getElementById('cart-sidebar').classList.contains('open')) {
-            renderCartSidebar();
-        }
-    }
-}
-
-// Clear cart for a specific store
-function clearStoreCart(storeId) {
-    if (shoppingCart[storeId]) {
-        delete shoppingCart[storeId];
-        saveCart();
-        updateCartUI();
-        showNotification('Cart cleared for this store.');
-    }
-}
-
-// Get cart totals for a store
-function getStoreCartTotal(storeId) {
-    if (!shoppingCart[storeId]) return { subtotal: 0, itemCount: 0 };
-
-    let subtotal = 0;
-    let itemCount = 0;
-
-    Object.values(shoppingCart[storeId]).forEach(item => {
-        subtotal += item.price * item.quantity;
-        itemCount += item.quantity;
-    });
-
-    return { subtotal, itemCount };
-}
-
-// Get total cart count across all stores
-function getTotalCartCount() {
-    let totalCount = 0;
-    Object.values(shoppingCart).forEach(storeCart => {
-        Object.values(storeCart).forEach(item => {
-            totalCount += item.quantity;
-        });
-    });
-    return totalCount;
-}
 
 // Render cart page with per-store carts and totals - Amazon-style redesign
 async function renderCartPage() {
@@ -2002,15 +1814,8 @@ function renderCartSidebar() {
     container.innerHTML = html;
 }
 
-const DEVELOPER_CREDENTIALS = {
-    username: 'michaelanang',
-    password: 'sexy@1905'
-};
-let developerAuthenticated = false;
-
-
-
-
+// Developer credentials moved to js/developer-credentials.js
+// See js/developer-credentials.js for `DEVELOPER_CREDENTIALS` and `developerAuthenticated`.
 
 // --- Load Store URL Tab ---
 async function loadStoreUrlTab() {
@@ -2188,14 +1993,6 @@ async function navigateTo(page, param = null) {
         if (page === 'food') loadFoodProducts();
 
         if (page === 'store-admin') {
-            const headerInfo = document.getElementById('admin-header-info');
-            if (currentUser && headerInfo) {
-                headerInfo.innerHTML = `
-                    <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem;">
-                        <i class="fas fa-user"></i> ${currentUser.displayName || 'Store Owner'}
-                    </span>
-                `;
-            }
             loadVendorDashboard();
         }
         if (page === 'store-public' && param) {
@@ -2266,6 +2063,12 @@ auth.onAuthStateChanged(async (user) => {
                 if (!storeQuery.empty) {
                     currentStoreData = storeQuery.docs[0].data();
                     currentStoreData.docId = storeQuery.docs[0].id;
+
+                    // Update vendor header info with phone number
+                    updateVendorHeaderInfo();
+
+                    // Wait 3 seconds after login so they aren't hit with it instantly
+                    setTimeout(checkVendorThemeStatus, 3000);
                 }
             }
             const activePage = document.querySelector('.page.active');
@@ -2337,189 +2140,10 @@ auth.onAuthStateChanged(async (user) => {
 });
 
 // --- 5. AUTHENTICATION FORMS ---
+// All authentication form submissions have been moved to js/auth.js
+// Note: The auth.onAuthStateChanged() listener below remains here as it's the main auth handler
+// Functions available in auth.js: login, signup, store registration, logout, toggleCategoryOther()
 
-// Login Function
-document.getElementById('login-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const pass = document.getElementById('login-password').value;
-
-    auth.signInWithEmailAndPassword(email, pass)
-        .then(async (cred) => {
-            // Get user role from database before redirecting
-            const userDoc = await db.collection('users').doc(cred.user.uid).get();
-            const userData = userDoc.data();
-            const userRoleAtLogin = userData ? userData.role : null;
-
-            showNotification('Login Successful!');
-            setTimeout(() => {
-                if (userRoleAtLogin === 'vendor') navigateTo('store-admin');
-                else if (userRoleAtLogin === 'developer') navigateTo('developer');
-                else if (userRoleAtLogin === 'customer') navigateTo('products'); // Changed from 'customer-orders' to 'products'
-                else navigateTo('home');
-            }, 500);
-        })
-        .catch((error) => showNotification(error.message));
-});
-// Customer / Developer / Vendor Signup Function
-document.getElementById('signup-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    // --- NEW: Terms Validation ---
-    const termsCheckbox = document.getElementById('reg-customer-terms');
-    if (!termsCheckbox || !termsCheckbox.checked) {
-        showNotification('⚠️ You must agree to the Terms of Service to create an account.');
-        return;
-    }
-    // -----------------------------
-
-    const name = document.getElementById('signup-name').value;
-    const email = document.getElementById('signup-email').value;
-    const pass = document.getElementById('signup-password').value;
-    const role = document.getElementById('signup-role').value;
-
-    const signupBtn = e.target.querySelector('button[type="submit"]');
-    const originalBtnText = signupBtn.innerHTML;
-    signupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
-    signupBtn.disabled = true;
-
-    auth.createUserWithEmailAndPassword(email, pass)
-        .then((cred) => {
-            // Create user account
-            return db.collection('users').doc(cred.user.uid).set({
-                name: name,
-                email: email,
-                role: role,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        })
-        .then(() => {
-            showNotification('Account Created! Welcome.');
-
-            // Set global variables immediately for the session
-            userRole = role;
-
-            setTimeout(() => {
-                if (role === 'customer') {
-                    navigateTo('products');
-                } else if (role === 'vendor') {
-                    navigateTo('register-store');
-                } else if (role === 'developer') {
-                    navigateTo('developer');
-                } else {
-                    navigateTo('home');
-                }
-            }, 1000);
-        })
-        .catch((error) => {
-            let errorMessage = 'An error occurred during signup.';
-            if (error.code === 'auth/weak-password') {
-                errorMessage = 'Password is too weak. Please use at least 6 characters.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Please enter a valid email address.';
-            } else if (error.code === 'auth/email-already-in-use') {
-                errorMessage = 'This email is already registered. Please use a different email.';
-            }
-            showNotification(errorMessage);
-        })
-        .finally(() => {
-            signupBtn.innerHTML = originalBtnText;
-            signupBtn.disabled = false;
-        });
-});
-// Vendor (Store) Registration Function
-document.getElementById('store-registration-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    // --- NEW: Terms Validation ---
-    const termsCheckbox = document.getElementById('reg-store-terms');
-    if (!termsCheckbox || !termsCheckbox.checked) {
-        showNotification('⚠️ You must agree to the Terms of Service to create a store.');
-        return;
-    }
-    // -----------------------------
-
-    const storeName = document.getElementById('reg-store-name').value;
-    const slug = document.getElementById('reg-store-url').value;
-    let categoryEl = document.getElementById('reg-store-category');
-    let category = categoryEl.value;
-    if (category === 'other') {
-        const otherVal = document.getElementById('reg-store-category-other')?.value?.trim();
-        if (otherVal) category = otherVal;
-    }
-    const email = document.getElementById('reg-store-email').value;
-    const pass = document.getElementById('reg-store-password').value;
-    // ADD LOCATION FIELD
-    const storeLocation = document.getElementById('reg-store-location')?.value || '';
-
-    // Basic validation
-    if (pass.length < 6) {
-        showNotification('Password must be at least 6 characters long.');
-        return;
-    }
-
-    // Show loading state
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
-    submitBtn.disabled = true;
-
-    auth.createUserWithEmailAndPassword(email, pass)
-        .then((cred) => {
-            const userPromise = db.collection('users').doc(cred.user.uid).set({
-                name: storeName + " Owner",
-                email: email,
-                role: 'vendor',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            const storePromise = db.collection('stores').doc(slug).set({
-                name: storeName,
-                slug: slug,
-                category: category,
-                ownerId: cred.user.uid,
-                theme: selectedRegTheme,
-                description: "New store on MarketSpace",
-                status: 'pending',
-                rating: 0,
-                reviews: 0,
-                storeLocation: storeLocation,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            return Promise.all([userPromise, storePromise]);
-        })
-        .then(async () => {
-            // Send Web3 email notification to developer
-            const ownerName = storeName + " Owner";
-            await sendApprovalNotification(storeName, ownerName, email, slug);
-
-            showNotification('Store Created! Approval notification sent to admin. Awaiting Admin Approval.');
-            setTimeout(() => {
-                navigateTo('home');
-            }, 1500);
-        })
-        .catch((error) => {
-            let errorMessage = 'An error occurred during store registration.';
-            if (error.code === 'auth/weak-password') {
-                errorMessage = 'Password is too weak. Please use at least 6 characters.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Please enter a valid email address.';
-            } else if (error.code === 'auth/email-already-in-use') {
-                errorMessage = 'This email is already registered. Please use a different email.';
-            } else if (error.code === 'auth/network-request-failed') {
-                errorMessage = 'Network error. Please check your connection and try again.';
-            }
-            showNotification(errorMessage);
-        })
-        .finally(() => {
-            // Reset button state
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
-});
-
-// Toggle display of 'Other' category input
 function toggleCategoryOther(selectEl) {
     // Try both registration and settings forms
     let otherInput = document.getElementById('reg-store-category-other');
@@ -2714,11 +2338,27 @@ function selectTheme(color, el) {
 }
 
 // Notification System
-function showNotification(message) {
+// Replace your existing showNotification function with this:
+function showNotification(message, type = 'success') {
     const n = document.getElementById('notification');
-    document.getElementById('notification-text').textContent = message;
+    const text = document.getElementById('notification-text');
+
+    text.textContent = message;
+
+    // Reset classes first
+    n.className = 'notification';
+
+    // If it's an error, add the error class (makes it red)
+    if (type === 'error') {
+        n.classList.add('error');
+    }
+
     n.style.display = 'block';
-    setTimeout(() => n.style.display = 'none', 3000);
+
+    // Hide after 3 seconds
+    setTimeout(() => {
+        n.style.display = 'none';
+    }, 3000);
 }
 
 // --- 7. CUSTOMER DASHBOARD ---
@@ -2779,48 +2419,79 @@ async function loadMarketStores() {
     container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Loading stores...</p>';
 
     try {
-        const snapshot = await db.collection('stores').where('status', '==', 'approved').get();
+        // OPTIMIZATION: Load only first 50 approved stores for homepage
+        const snapshot = await db.collection('stores')
+            .where('status', '==', 'approved')
+            .limit(50)
+            .get();
+
         if (snapshot.empty) {
-            container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No stores available yet.</p>';
+            container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">stores Not loading . Refresh</p>';
             return;
         }
 
-        let html = '';
+        // Convert to array to sort
+        let storesArray = [];
         snapshot.forEach(doc => {
-            const data = doc.data();
+            storesArray.push({ id: doc.id, data: doc.data() });
+        });
+
+        // Apply Sort
+        storesArray.sort((a, b) => {
+            const dataA = a.data;
+            const dataB = b.data;
+
+            // 1. Verified
+            if (dataA.isVerified && !dataB.isVerified) return -1;
+            if (!dataA.isVerified && dataB.isVerified) return 1;
+
+            // 2. Background Image
+            const hasBgA = dataA.backgroundImageUrl && dataA.backgroundImageUrl.trim() !== '';
+            const hasBgB = dataB.backgroundImageUrl && dataB.backgroundImageUrl.trim() !== '';
+            if (hasBgA && !hasBgB) return -1;
+            if (!hasBgA && hasBgB) return 1;
+
+            // 3. Product Count
+            const countA = parseInt(dataA.productCount || 0);
+            const countB = parseInt(dataB.productCount || 0);
+            return countB - countA;
+        });
+
+        let html = '';
+        storesArray.forEach(item => {
+            const data = item.data;
+            const docId = item.id;
             const legacyMap = { blue: 'primary', purple: 'secondary', green: 'success' };
             const themeName = legacyMap[data.theme] || data.theme || 'primary';
 
-            // Calculate product count for this store
-            const productsCount = data.productCount || Math.floor(Math.random() * 50) + 5;
+            // Use real product count if available, otherwise 0
+            const displayCount = data.productCount || 0;
 
             html += `
                 <div class="store-card">
-                    <!-- Featured badge (optional) -->
-                    ${data.featured ? `<div class="featured-badge">Featured</div>` : ''}
+                    ${data.isVerified ? `<div class="featured-badge" style="background:var(--primary);"><i class="fas fa-check-circle"></i> Verified</div>` : ''}
                     
-                    <!-- Store status -->
                     <div class="store-status">
                         <i class="fas fa-store"></i> Open
                     </div>
                     
-                    <!-- Store header with theme color or image -->
-                    <div class="store-header" style="${data.backgroundImageUrl ?
+                    <div class="store-header" onclick="navigateTo('store-detail', '${docId}')" style="cursor: pointer; ${data.backgroundImageUrl ?
                     `background: url('${data.backgroundImageUrl}') center/cover no-repeat;` :
                     `background: linear-gradient(135deg, var(--${themeName}), color-mix(in srgb, var(--${themeName}) 80%, black 20%))`}">
                         <div class="store-facade"></div>
-                        <div class="store-logo">${data.name.substring(0, 2).toUpperCase()}</div>
+                        <div class="store-logo">${(data.name || 'S').substring(0, 2).toUpperCase()}</div>
                     </div>
                     
-                    <!-- Store content -->
                     <div class="store-content">
-                        <h3>${data.name}</h3>
+                        <h3 onclick="navigateTo('store-detail', '${docId}')" style="cursor: pointer; display:flex; align-items:center; gap:5px;">
+                            ${data.name}
+                            ${data.isVerified ? '<img src="veri.png" alt="Verified" style="width:16px; height:16px;">' : ''}
+                        </h3>
                         
                         <div class="store-category">
                             <i class="fas fa-tag"></i> ${data.category}
                         </div>
                         
-                        <!-- ADD LOCATION DISPLAY -->
                         ${data.storeLocation ? `
                         <div class="store-location" style="display: flex; align-items: center; gap: 5px; color: var(--gray); font-size: 0.9rem; margin: 5px 0;">
                             <i class="fas fa-map-marker-alt" style="font-size: 0.8rem;"></i>
@@ -2830,25 +2501,21 @@ async function loadMarketStores() {
                         
                         <div class="store-rating">
                             <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
                             </div>
-                            <span class="count">${data.rating || '4.5'}/5 (${data.reviews || '12'} reviews)</span>
+                            <span class="count">${data.rating || '4.5'}/5</span>
                         </div>
                         
-                        <p style="color: var(--gray); font-size: 0.9rem; margin-bottom: 15px;">
+                        <p style="color: var(--gray); font-size: 0.9rem; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                             ${data.description || 'Explore amazing products in this store.'}
                         </p>
                         
                         <div class="store-footer">
                             <div class="store-products">
-                                <i class="fas fa-box"></i> ${productsCount} products
+                                <i class="fas fa-box"></i> ${displayCount} products
                             </div>
-                            <a onclick="navigateTo('store-detail', '${doc.id}')" class="store-link">
-                                <i class="fas fa-external-link-alt"></i> Visit Store
+                            <a onclick="navigateTo('store-detail', '${docId}')" class="store-link">
+                                Visit <i class="fas fa-arrow-right"></i>
                             </a>
                         </div>
                     </div>
@@ -2862,667 +2529,69 @@ async function loadMarketStores() {
     }
 }
 
-// --- AMAZON-STYLE PRODUCTS PAGE ---
+// --- PRODUCT PAGE ---
+// All product-related functions have been moved to js/products.js
+// See js/products.js for: loadAmazonProducts, buildProductCard, renderProductsPage,
+// viewProduct, closeProductDetailModal, buyNow, searchProducts, and all filter/pagination functions
 
-// --- AMAZON-STYLE PRODUCTS PAGE ---
+// All product-related functions have been moved to js/products.js
+// No need to redefine them here
 
-async function loadAmazonProducts() {
-    const container = document.getElementById('amazon-products-grid');
-    if (!container) return;
+// --- 9. VENDOR DASHBOARD ---
 
-    try {
-        const snapshot = await db.collection('products').get();
-
-        if (snapshot.empty) {
-            productsListAll = [];
-            productsList = [];
-            container.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 60px;">
-                    <i class="fas fa-box-open" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 20px;"></i>
-                    <h3 style="margin-bottom: 15px; color: var(--dark);">No products found</h3>
-                    <p style="color: var(--gray);">Check back later for new products!</p>
-                </div>
-            `;
-            const countElement = document.getElementById('products-count');
-            if (countElement) countElement.textContent = `0 of 0 products`;
-            return;
-        }
-
-        productsListAll = snapshot.docs
-            .map(doc => ({ id: doc.id, data: doc.data() }))
-            .filter(item => {
-                const category = (item.data.category || '').toLowerCase();
-                // Exclude categories related to food
-                return category !== 'food' && category !== 'food & beverages' && category !== 'groceries';
-            });
-
-        // Check if list is empty after filtering
-        if (productsListAll.length === 0) {
-            container.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 60px;">
-                    <i class="fas fa-box-open" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 20px;"></i>
-                    <h3 style="margin-bottom: 15px; color: var(--dark);">No products found</h3>
-                    <p style="color: var(--gray);">Check back later for new products!</p>
-                </div>
-            `;
-            const countElement = document.getElementById('products-count');
-            if (countElement) countElement.textContent = `0 of 0 products`;
-            return;
-        }
-
-        // apply current filters and render
-        currentProductsPage = 1;
-        applyFiltersAndRender();
-
-        // wire up filter input listeners once
-        setupProductFilterListeners();
-        // apply current filters and render
-        currentProductsPage = 1;
-        applyFiltersAndRender();
-
-        // wire up filter input listeners once
-        setupProductFilterListeners();
-
-    } catch (error) {
-        console.error('Error loading products:', error);
-        container.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--danger);">
-                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                <h3>Error Loading Products</h3>
-                <p>There was a problem loading products. Please try again.</p>
-                <button onclick="loadAmazonProducts()" class="btn btn-primary" style="margin-top: 15px;">
-                    <i class="fas fa-redo"></i> Try Again
-                </button>
-            </div>
-        `;
-    }
-}
-
-function buildProductCard(docId, data) {
-    const storeId = data.storeId || 'unknown';
-    const rating = data.rating || Math.random() * 2 + 3;
-    const reviewCount = data.reviews || Math.floor(Math.random() * 1000);
-    const originalPrice = (data.price || 0) * (1 + Math.random() * 0.3);
-    const savings = originalPrice - (data.price || 0);
-    const savingsPercent = originalPrice > 0 ? Math.round((savings / originalPrice) * 100) : 0;
-
-    // Check if item is already in wishlist
-    const isInWishlist = wishlist[storeId] && wishlist[storeId][docId];
-
-    // --- NEW: Check if item is in Compare List ---
-    // (Ensure compareList is defined at the top of your file as: let compareList = [];)
-    const isCompare = typeof compareList !== 'undefined' ? compareList.some(item => item.id === docId) : false;
-
-    // --- NEW: Create Full JSON for Comparison ---
-    const productJsonFull = JSON.stringify({
-        id: docId,
-        ...data
-    }).replace(/"/g, '&quot;');
-
-    // Helper to escape JSON for the Add to Cart onclick event
-    const productJson = JSON.stringify({
-        name: data.name,
-        price: data.price,
-        currency: data.currency || 'GHS',
-        imageUrl: data.imageUrl || '',
-        quantity: 1
-    }).replace(/"/g, '&quot;');
-
-    return `
-        <div class="amazon-product-card">
-            
-            <label class="compare-checkbox-container" onclick="event.stopPropagation()">
-                <input type="checkbox" ${isCompare ? 'checked' : ''} onchange="toggleCompare(this, ${productJsonFull})">
-                <span>Compare</span>
-            </label>
-
-            ${savings > 0 ? `<div class="product-badge">Save ${savingsPercent}%</div>` : ''}
-            
-            <div class="wishlist-overlay-btn ${isInWishlist ? 'active' : ''}" 
-                 onclick="toggleWishlist(event, '${docId}', '${storeId}', ${productJson})">
-                <i class="${isInWishlist ? 'fas' : 'far'} fa-heart"></i>
-            </div>
-
-            <div class="amazon-product-img" onclick="navigateToStoreAndHighlight('${storeId}', '${docId}')" style="cursor: pointer;">
-                ${data.imageUrl ? `<img src="${data.imageUrl}" alt="${data.name}" loading="lazy">` : `<i class="fas fa-box" style="font-size: 3rem; color: var(--gray);"></i>`}
-            </div>
-            
-            <div class="amazon-product-content">
-                <h3 class="amazon-product-title" onclick="viewProduct('${docId}')" style="cursor: pointer;">${data.name}</h3>
-                
-                <div class="amazon-product-rating">
-                    <div class="amazon-stars">${'★'.repeat(Math.floor(rating))}${rating % 1 >= 0.5 ? '½' : ''}${'☆'.repeat(5 - Math.ceil(rating))}</div>
-                    <span class="amazon-rating-count">(${reviewCount})</span>
-                </div>
-                
-                <div class="amazon-product-price">
-                    <span class="amazon-current-price">${formatCurrency(data.price || 0, data.currency || 'GHS')}</span>
-                    ${savings > 0 ? `<span class="amazon-original-price">${formatCurrency(originalPrice, data.currency || 'GHS')}</span>` : ''}
-                </div>
-                
-                <div class="amazon-delivery-info">
-                    <i class="fas fa-shipping-fast"></i> ${data.quantity > 0 ? 'Free delivery' : 'Out of stock'}
-                </div>
-                
-                <div class="amazon-product-actions">
-                    <button class="amazon-buy-now" onclick="navigateTo('store-detail', '${storeId}')">
-                        View Store
-                    </button>
-                    
-                    <button class="amazon-cart-icon-btn" title="Add to Cart" onclick="addToCart('${docId}', '${storeId}', ${productJson})">
-                        <i class="fas fa-cart-plus"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-}
-function renderProductsPage(page) {
-    const container = document.getElementById('amazon-products-grid');
-    if (!container) return;
-
-    // FIX: Use a fixed number of items instead of dynamic calculation
-    // 12 is divisible by 2, 3, and 4, making it perfect for all screen sizes
-    const itemsPerPage = 12;
-
-    const totalItems = productsList.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-
-    // Clamp page to valid range
-    page = Math.max(1, Math.min(page, totalPages));
-    currentProductsPage = page;
-
-    const start = (page - 1) * itemsPerPage;
-    const end = Math.min(start + itemsPerPage, totalItems);
-    const slice = productsList.slice(start, end);
-
-    // Render Products
-    if (slice.length === 0) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px;">No products found.</div>`;
-    } else {
-        container.innerHTML = slice.map(p => buildProductCard(p.id, p.data)).join('');
-    }
-
-    // Update "Showing X of Y products" text
-    const countElement = document.getElementById('products-count');
-    if (countElement) countElement.textContent = `${start + 1}-${end} of ${totalItems} products`;
-
-    // Render Page Numbers (Max 5 buttons to prevent overcrowding)
-    const pageNumbersEl = document.querySelector('.page-numbers');
-    if (pageNumbersEl) {
-        pageNumbersEl.innerHTML = '';
-
-        // Simple logic to show a window of pages
-        let startPage = Math.max(1, page - 2);
-        let endPage = Math.min(totalPages, startPage + 4);
-
-        // Adjust start if we are near the end
-        if (endPage - startPage < 4) {
-            startPage = Math.max(1, endPage - 4);
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            const span = document.createElement('span');
-            span.className = 'page-number' + (i === page ? ' active' : '');
-            span.textContent = i;
-            span.style.cursor = 'pointer';
-            span.onclick = () => {
-                renderProductsPage(i);
-                // Scroll back to top of products when changing page
-                document.querySelector('.products-header').scrollIntoView({ behavior: 'smooth' });
-            };
-            pageNumbersEl.appendChild(span);
-        }
-    }
-
-    // Update Prev/Next Button States
-    const prevBtn = document.querySelector('.products-pagination .page-btn:first-of-type');
-    const nextBtn = document.querySelector('.products-pagination .page-btn:last-of-type');
-
-    if (prevBtn) {
-        prevBtn.classList.toggle('disabled', page <= 1);
-        prevBtn.onclick = page <= 1 ? null : () => prevPage();
-    }
-
-    if (nextBtn) {
-        nextBtn.classList.toggle('disabled', page >= totalPages);
-        nextBtn.onclick = page >= totalPages ? null : () => nextPage();
-    }
-}
-// --- View Product Details (New Modal Implementation) ---
-// --- View Product Details with Reviews ---
-async function viewProduct(productId) {
-    const modal = document.getElementById('product-detail-modal');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-
-    // Reset content to loading
-    document.getElementById('pd-title').textContent = 'Loading...';
-    document.getElementById('pd-description').textContent = '';
-    document.getElementById('pd-image').src = '';
-    document.getElementById('pd-price').textContent = '';
-    document.getElementById('pd-actions').innerHTML = '';
-
-    // Clear previous reviews section if it exists (dynamic injection)
-    const existingReviews = document.getElementById('pd-reviews-container');
-    if (existingReviews) existingReviews.remove();
-
-    try {
-        const doc = await db.collection('products').doc(productId).get();
-
-        if (!doc.exists) {
-            closeProductDetailModal();
-            showNotification('Product not found');
-            return;
-        }
-
-        const data = doc.data();
-        const storeId = data.storeId;
-        const currency = data.currency || 'GHS';
-
-        // Populate Basic Info
-        document.getElementById('pd-title').textContent = data.name;
-        document.getElementById('pd-description').textContent = data.description || 'No description available.';
-        document.getElementById('pd-category').textContent = data.category || 'General';
-        document.getElementById('pd-price').textContent = formatCurrency(data.price, currency);
-
-        const imgEl = document.getElementById('pd-image');
-        if (data.imageUrl) {
-            imgEl.src = data.imageUrl;
-            imgEl.style.display = 'block';
-        } else {
-            imgEl.style.display = 'none';
-        }
-
-        // Stock Badge Logic
-        const stockEl = document.getElementById('pd-stock-badge');
-        if (data.quantity > 0) {
-            stockEl.textContent = 'In Stock';
-            stockEl.style.background = '#dcfce7';
-            stockEl.style.color = '#166534';
-        } else {
-            stockEl.textContent = 'Out of Stock';
-            stockEl.style.background = '#fee2e2';
-            stockEl.style.color = '#991b1b';
-        }
-
-        // Generate Action Buttons
-        const actionsContainer = document.getElementById('pd-actions');
-        if (currentUser && userRole === 'customer') {
-            actionsContainer.innerHTML = `
-                <button onclick="addToCart('${productId}', '${storeId}', ${JSON.stringify({
-                name: data.name, price: data.price, currency: currency, category: data.category,
-                imageUrl: data.imageUrl || '', quantity: data.quantity
-            }).replace(/"/g, '&quot;')}); closeProductDetailModal()" 
-                class="btn btn-primary" style="flex: 1; padding: 12px;">
-                    <i class="fas fa-cart-plus"></i> Add to Cart
-                </button>
-                <button onclick="closeProductDetailModal(); startChatWithVendor('${data.vendorId}', 'Store', '${storeId}', '${productId}', '${data.name.replace(/'/g, "\\'")}')" 
-                class="btn btn-outline" style="flex: 1; padding: 12px;">
-                    <i class="fas fa-comments"></i> Negotiate
-                </button>
-            `;
-        } else if (!currentUser) {
-            actionsContainer.innerHTML = `<button onclick="closeProductDetailModal(); navigateTo('login')" class="btn btn-primary" style="width: 100%;">Log in to Buy</button>`;
-        } else {
-            actionsContainer.innerHTML = `<button onclick="closeProductDetailModal()" class="btn btn-outline" style="width: 100%;">Close Preview</button>`;
-        }
-
-        // --- INJECT REVIEW SECTION ---
-        const infoSection = document.querySelector('.pd-info-section');
-
-        const reviewsHTML = `
-            <div id="pd-reviews-container" class="reviews-section">
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
-                <div class="reviews-header">
-                    <h3>Customer Reviews</h3>
-                    <div class="average-rating">
-                        <span class="stars" style="color:#ffa41c;">${'★'.repeat(Math.round(data.rating || 0))}${'☆'.repeat(5 - Math.round(data.rating || 0))}</span>
-                        <span class="rating-text">${(data.rating || 0).toFixed(1)} out of 5</span>
-                        <span class="review-count">(${data.reviews || 0} reviews)</span>
-                    </div>
-                </div>
-
-                <div id="reviews-list" class="reviews-list">
-                    <p class="loading-text">Loading reviews...</p>
-                </div>
-
-                ${currentUser && userRole === 'customer' ? `
-                <div class="write-review-box">
-                    <h4>Write a Review</h4>
-                    <form id="review-form" onsubmit="submitProductReview(event, '${productId}', '${storeId}')">
-                        <div class="star-rating-input">
-                            <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="5 stars">★</label>
-                            <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4 stars">★</label>
-                            <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3 stars">★</label>
-                            <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2 stars">★</label>
-                            <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 star">★</label>
-                        </div>
-                        <textarea id="review-comment" class="form-control" rows="3" placeholder="Share your thoughts about this product..." required></textarea>
-                        <button type="submit" class="btn btn-primary btn-sm" style="margin-top:10px;">Submit Review</button>
-                    </form>
-                </div>
-                ` : currentUser ? '' : '<div class="login-prompt"><a onclick="closeProductDetailModal(); navigateTo(\'login\')">Log in</a> to write a review.</div>'}
-            </div>
-        `;
-
-        infoSection.insertAdjacentHTML('beforeend', reviewsHTML);
-
-        // Load the actual reviews
-        loadReviewsForProduct(productId);
-
-    } catch (error) {
-        console.error('Error viewing product:', error);
-        closeProductDetailModal();
-        showNotification('Error loading product details');
-    }
-}
-function closeProductDetailModal() {
-    const modal = document.getElementById('product-detail-modal');
-    modal.style.display = 'none';
-    document.body.style.overflow = ''; // Restore scrolling
-}
-
-// Close modal when clicking outside
-document.addEventListener('click', function (e) {
-    const modal = document.getElementById('product-detail-modal');
-    if (e.target === modal) {
-        closeProductDetailModal();
-    }
-});
-
-// [UPDATED] Buy Now function - Adds to cart and opens checkout immediately
-function buyNow(productId, storeId, productData) {
-    if (!currentUser || userRole !== 'customer') {
-        showNotification('Please log in as a customer to buy items.');
-        navigateTo('login');
-        return;
-    }
-
-    // 1. Add item to cart
-    // We manually add it here to avoid the "Added to cart" notification from the standard function,
-    // or we can just reuse addToCart. Let's reuse logic but skip the notification for smoother flow.
-
-    if (!shoppingCart[storeId]) {
-        shoppingCart[storeId] = {};
-    }
-
-    if (shoppingCart[storeId][productId]) {
-        shoppingCart[storeId][productId].quantity += 1;
-    } else {
-        shoppingCart[storeId][productId] = {
-            ...productData,
-            quantity: 1
-        };
-    }
-
-    saveCart();
-    updateCartUI();
-
-    // 2. Open Checkout Immediately
-    checkoutCart();
-}
-
-function sortProducts(sortBy) {
-    showNotification(`Sorting by: ${sortBy}`);
-    // In a real implementation, this would sort the products
-    loadAmazonProducts(); // Reload with sorting
-}
-
-function clearFilters() {
-    document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    document.getElementById('price-slider').value = 500;
-    showNotification('Filters cleared');
-    // Re-apply filters (will use full products list)
-    applyFiltersAndRender();
-}
-
-// Search products by name
-function searchProducts(searchTerm) {
-    if (!productsListAll || productsListAll.length === 0) {
-        loadAmazonProducts();
-        return;
-    }
-
-    const searchValue = searchTerm.trim().toLowerCase();
-
-    if (!searchValue) {
-        // If search is empty, apply current filters
-        applyFiltersAndRender();
-        return;
-    }
-
-    // Filter products by name
-    const filtered = productsListAll.filter(p => {
-        const productName = (p.data?.name || '').toLowerCase();
-        return productName.includes(searchValue);
-    });
-
-    productsList = filtered;
-    currentProductsPage = 1;
-    renderProductsPage(currentProductsPage);
-}
-
-// Clear search input and results
-// Navigate to store and highlight a specific product
-function navigateToStoreAndHighlight(storeId, productId) {
-    // Store the product ID to highlight in session storage
-    sessionStorage.setItem('highlightProductId', productId);
-    // Navigate to the store detail page
-    navigateTo('store-detail', storeId);
-}
-
-function clearSearch() {
-    const searchInput = document.getElementById('product-search');
-    if (searchInput) {
-        searchInput.value = '';
-    }
-    // Re-apply current filters
-    applyFiltersAndRender();
-    showNotification('Search cleared');
-}
-
-// Handle store product search
-function handleStoreProductSearch(searchTerm, allProducts) {
-    const searchValue = searchTerm.trim().toLowerCase();
-    const resultsContainer = document.querySelector('.products-grid');
-
-    if (!resultsContainer) return;
-
-    if (!searchValue) {
-        // Show all products
-        const cards = resultsContainer.querySelectorAll('.product-card');
-        cards.forEach(card => card.style.display = 'block');
-        return;
-    }
-
-    // Filter and show matching products
-    const cards = resultsContainer.querySelectorAll('.product-card');
-    let visibleCount = 0;
-
-    cards.forEach((card, index) => {
-        const product = allProducts[index];
-        if (product && product.name.toLowerCase().includes(searchValue)) {
-            card.style.display = 'block';
-            visibleCount++;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-
-    // Show message if no results
-    if (visibleCount === 0) {
-        showNotification(`No products found matching "${searchTerm}"`);
-    }
-}
-
-// Clear store product search
-function clearStoreSearch() {
-    const searchInput = document.getElementById('store-product-search');
-    if (searchInput) {
-        searchInput.value = '';
-        handleStoreProductSearch('', []);
-        showNotification('Search cleared');
-    }
-}
-
-// Debounced mobile search helper and clearing function
-let _mobileSearchTimeout = null;
-function debouncedMobileSearch(value) {
-    // Mirror value into desktop search input if present
-    const desktop = document.getElementById('product-search');
-    if (desktop) desktop.value = value;
-
-    if (_mobileSearchTimeout) clearTimeout(_mobileSearchTimeout);
-    _mobileSearchTimeout = setTimeout(() => {
-        try {
-            searchProducts(value);
-        } catch (err) {
-            console.error('Mobile search error', err);
-        }
-    }, 250);
-}
-
-function clearMobileSearch() {
-    const mobile = document.getElementById('mobile-product-search');
-    if (mobile) mobile.value = '';
-    const desktop = document.getElementById('product-search');
-    if (desktop) desktop.value = '';
-    if (_mobileSearchTimeout) {
-        clearTimeout(_mobileSearchTimeout);
-        _mobileSearchTimeout = null;
-    }
-    applyFiltersAndRender();
-    showNotification('Search cleared');
-}
-
-// Apply selected filters to the full products list and render
-function applyFiltersAndRender() {
-    if (!productsListAll || productsListAll.length === 0) {
-        // If products not loaded yet, fetch them
-        loadAmazonProducts();
-        return;
-    }
-
-    // Category mapping (checkbox id -> keyword to match)
-    const categoryMap = {
-        'cat-electronics': 'electronics',
-        'cat-fashion': 'fashion',
-        'cat-home': 'home',
-        'cat-books': 'books',
-        'cat-sports': 'sports',
-        'cat-beauty': 'beauty'
-    };
-
-    // Collect selected categories
-    const selectedCats = Object.keys(categoryMap).filter(id => {
-        const el = document.getElementById(id);
-        return el && el.checked;
-    }).map(id => categoryMap[id]);
-
-    // Price limit
-    const priceSlider = document.getElementById('price-slider');
-    const maxPrice = priceSlider ? parseFloat(priceSlider.value) : Infinity;
-
-    // Ratings
-    const ratingChecks = ['rating-4', 'rating-3', 'rating-2'].filter(id => {
-        const el = document.getElementById(id);
-        return el && el.checked;
-    }).map(id => parseInt(id.split('-')[1], 10));
-
-    // Availability
-    const inStockEl = document.getElementById('in-stock');
-    const inStockOnly = inStockEl ? inStockEl.checked : false;
-    const fastDeliveryEl = document.getElementById('fast-delivery');
-    const fastOnly = fastDeliveryEl ? fastDeliveryEl.checked : false;
-
-    // Filter logic
-    const filtered = productsListAll.filter(p => {
-        const data = p.data || {};
-
-        // Category: if any category checked, product must match at least one
-        if (selectedCats.length > 0) {
-            const cat = (data.category || '').toString().toLowerCase();
-            const matchesCat = selectedCats.some(sc => cat.includes(sc));
-            if (!matchesCat) return false;
-        }
-
-        // Price
-        const price = parseFloat(data.price) || 0;
-        if (!isNaN(maxPrice) && price > maxPrice) return false;
-
-        // Rating: if any rating boxes checked, product must meet at least one threshold
-        if (ratingChecks.length > 0) {
-            const rating = parseFloat(data.rating) || 0;
-            const matchesRating = ratingChecks.some(th => rating >= th);
-            if (!matchesRating) return false;
-        }
-
-        // In stock
-        if (inStockOnly) {
-            if (!(data.quantity > 0)) return false;
-        }
-
-        // Fast delivery
-        if (fastOnly) {
-            if (!data.fastDelivery) return false;
-        }
-
-        return true;
-    });
-
-    productsList = filtered;
-    currentProductsPage = 1;
-    renderProductsPage(currentProductsPage);
-}
-
-// Attach listeners to filter inputs (only once)
-function setupProductFilterListeners() {
-    if (_productFiltersInitialized) return;
-    _productFiltersInitialized = true;
-
-    // All checkboxes in sidebar
-    document.querySelectorAll('.products-sidebar .filter-option input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', () => applyFiltersAndRender());
-    });
-
-    // Price slider
-    const priceSlider = document.getElementById('price-slider');
-    if (priceSlider) {
-        priceSlider.addEventListener('input', () => applyFiltersAndRender());
-    }
-}
-
-function prevPage() {
-    if (currentProductsPage > 1) {
-        renderProductsPage(currentProductsPage - 1);
-        // Scroll to top of grid
-        const header = document.querySelector('.products-header');
-        if (header) header.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
-function nextPage() {
-    // Check if we can actually go forward before calling render
-    const itemsPerPage = 12; // Must match the number in renderProductsPage
-    const totalPages = Math.ceil(productsList.length / itemsPerPage);
-
-    if (currentProductsPage < totalPages) {
-        renderProductsPage(currentProductsPage + 1);
-        // Scroll to top of grid
-        const header = document.querySelector('.products-header');
-        if (header) header.scrollIntoView({ behavior: 'smooth' });
-    }
-}
+// Product functions moved to js/products.js
+// The real loadVendorDashboard is defined below
 
 // --- 9. VENDOR DASHBOARD ---
 
 async function loadVendorDashboard() {
     if (userRole !== 'vendor' || !currentStoreData) return;
 
+    // Update header info with phone number
+    updateVendorHeaderInfo();
+
     showAdminTab('overview');
+}
+
+// --- 9. VENDOR DASHBOARD --- (continued)
+// All product functions have been moved to js/products.js
+// *** Product functions moved to js/products.js ***
+// - viewProduct, closeProductDetailModal, buyNow, searchProducts
+// - navigateToStoreAndHighlight, clearSearch, clearStoreSearch
+// - debouncedMobileSearch, clearMobileSearch, handleStoreProductSearch
+
+// *** More product functions moved to js/products.js ***
+// - applyFiltersAndRender, setupProductFilterListeners, setupInfiniteScrollForProducts
+// - prevPage, nextPage, renderProductsPage, sortProducts, clearFilters
+
+// --- 9. VENDOR DASHBOARD ---
+
+async function loadVendorDashboard() {
+    if (userRole !== 'vendor' || !currentStoreData) return;
+
+    // Update header info with phone number
+    updateVendorHeaderInfo();
+
+    showAdminTab('overview');
+}
+
+// Function to update vendor dashboard header with phone number
+function updateVendorHeaderInfo() {
+    const headerInfo = document.getElementById('admin-header-info');
+    if (!headerInfo || !currentStoreData) return;
+
+    const phoneDisplay = currentStoreData.contactPhone
+        ? `<span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; margin-left: 10px;">
+            <i class="fas fa-phone"></i> ${currentStoreData.contactPhone}
+           </span>`
+        : '';
+
+    headerInfo.innerHTML = `
+        <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem;">
+            <i class="fas fa-store"></i> ${currentStoreData.name}
+        </span>
+        ${phoneDisplay}
+    `;
 }
 
 // [Find this function in main.js and replace/update it]
@@ -4227,6 +3296,14 @@ async function loadVendorSettings() {
                     <p style="margin: 5px 0 0; font-weight: 600; font-size: 1.1rem; color: var(--dark);">${storeData.storeLocation}</p>
                 </div>
                 ` : ''}
+                ${storeData.contactPhone ? `
+                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <p style="margin: 0; color: var(--gray); font-size: 0.9rem;">Contact Phone</p>
+                    <p style="margin: 5px 0 0; font-weight: 600; font-size: 1.1rem; color: var(--primary);">
+                        <i class="fas fa-phone"></i> ${storeData.contactPhone}
+                    </p>
+                </div>
+                ` : ''}
             </div>
             
             <h4 style="margin-bottom: 20px; color: var(--dark);">Edit Store Settings</h4>
@@ -4240,6 +3317,12 @@ async function loadVendorSettings() {
                     <label>Store Location</label>
                     <input type="text" id="settings-store-location" class="form-control" value="${storeData.storeLocation || ''}" placeholder="e.g., Accra, Ghana">
                     <small style="color: var(--gray); font-size: 0.85rem; display: block; margin-top: 5px;">This will be displayed on your store page for customers.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Contact Phone/MoMo Number *</label>
+                    <input type="tel" id="settings-contact-phone" class="form-control" value="${storeData.contactPhone || ''}" placeholder="e.g., 0241234567" maxlength="15" required>
+                    <small style="color: var(--gray); font-size: 0.85rem; display: block; margin-top: 5px;">Customers can reach you on this number. This will be displayed in your store header.</small>
                 </div>
 
                 <div class="form-group">
@@ -4362,9 +3445,131 @@ async function deleteProduct(productId) {
     }
 }
 
-function editProduct(productId) {
-    showNotification('Edit functionality coming soon! Product ID: ' + productId);
+// --- EDIT PRODUCT FUNCTIONS ---
+
+// 1. Open the Modal and Populate Data
+async function editProduct(productId) {
+    const submitBtn = document.querySelector('#edit-product-form button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    // Show loading notification
+    showNotification('Loading product details...');
+
+    try {
+        const doc = await db.collection('products').doc(productId).get();
+        if (!doc.exists) {
+            showNotification('Product not found.');
+            return;
+        }
+
+        const data = doc.data();
+
+        // Populate fields
+        document.getElementById('edit-prod-id').value = productId;
+        document.getElementById('edit-prod-name').value = data.name;
+        document.getElementById('edit-prod-price').value = data.price;
+        document.getElementById('edit-prod-quantity').value = data.quantity;
+        document.getElementById('edit-prod-description').value = data.description || '';
+        document.getElementById('edit-prod-category').value = data.category || 'other';
+
+        // Handle Image Preview
+        const imgPreview = document.getElementById('edit-prod-current-img');
+        if (data.imageUrl) {
+            imgPreview.src = data.imageUrl;
+            imgPreview.style.display = 'inline-block';
+        } else {
+            imgPreview.style.display = 'none';
+        }
+
+        // Reset file input
+        document.getElementById('edit-prod-image').value = '';
+
+        // Show Modal
+        document.getElementById('edit-product-modal').style.display = 'flex';
+
+    } catch (error) {
+        console.error("Error loading product:", error);
+        showNotification("Error loading product details.");
+    }
 }
+
+// 2. Close the Modal
+function closeEditProductModal() {
+    document.getElementById('edit-product-modal').style.display = 'none';
+}
+
+// 3. Handle Form Submission
+document.getElementById('edit-product-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const productId = document.getElementById('edit-prod-id').value;
+    if (!productId) return;
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    // UI Loading State
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    submitBtn.disabled = true;
+
+    try {
+        // Gather text data
+        const updates = {
+            name: document.getElementById('edit-prod-name').value,
+            price: parseFloat(document.getElementById('edit-prod-price').value),
+            quantity: parseInt(document.getElementById('edit-prod-quantity').value),
+            description: document.getElementById('edit-prod-description').value,
+            category: document.getElementById('edit-prod-category').value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // Check for new image
+        const imageFile = document.getElementById('edit-prod-image').files[0];
+
+        if (imageFile) {
+            showNotification('Optimizing new image...');
+            try {
+                // Reuse your existing compressImage function
+                const newImageUrl = await compressImage(imageFile, 800, 800, 0.7);
+
+                // Firestore limit check (1MB)
+                if (newImageUrl.length > 1048576) {
+                    throw new Error("Image too large. Please pick a smaller image.");
+                }
+
+                updates.imageUrl = newImageUrl;
+            } catch (imgError) {
+                alert("Image processing failed: " + imgError.message);
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
+        }
+
+        // Perform Update
+        await db.collection('products').doc(productId).update(updates);
+
+        showNotification('✅ Product updated successfully!');
+        closeEditProductModal();
+
+        // Refresh the list
+        loadVendorProducts();
+
+    } catch (error) {
+        console.error("Error updating product:", error);
+        showNotification("❌ Update failed: " + error.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('edit-product-modal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('edit-product-modal')) {
+        closeEditProductModal();
+    }
+});
 
 // Store Theme Selection for Settings
 function selectStoreTheme(theme, el) {
@@ -4458,6 +3663,7 @@ async function saveStoreSettings(e) {
 
     const name = document.getElementById('settings-store-name').value.trim();
     const storeLocation = document.getElementById('settings-store-location').value.trim();
+    const contactPhone = document.getElementById('settings-contact-phone').value.trim();
     let categoryEl = document.getElementById('settings-store-category');
     let category = categoryEl.value;
     if (category === 'other') {
@@ -4465,6 +3671,14 @@ async function saveStoreSettings(e) {
         if (otherVal) category = otherVal;
     }
     const description = document.getElementById('settings-description').value.trim();
+
+    // Validate phone number
+    if (!contactPhone) {
+        showNotification('❌ Please enter a contact phone number.');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        return;
+    }
 
     // Get theme type (color or image)
     const themeTypeRadios = document.querySelectorAll('input[name="theme-type"]');
@@ -4544,6 +3758,7 @@ async function saveStoreSettings(e) {
             category: category,
             description: description,
             storeLocation: storeLocation,
+            contactPhone: contactPhone,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
@@ -4562,6 +3777,9 @@ async function saveStoreSettings(e) {
         // Update local store data
         Object.assign(currentStoreData, updateData);
 
+        // Update the header info immediately after updating local data
+        updateVendorHeaderInfo();
+
         showNotification('✅ Store settings updated successfully!');
 
         setTimeout(() => {
@@ -4570,16 +3788,6 @@ async function saveStoreSettings(e) {
             loadVendorSettings(); // Refresh the settings display
             loadVendorDashboard(); // Update dashboard with new settings
         }, 500);
-
-        // Update the header info
-        const headerInfo = document.getElementById('admin-header-info');
-        if (headerInfo) {
-            headerInfo.innerHTML = `
-                <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem;">
-                    <i class="fas fa-store"></i> ${currentStoreData.name}
-                </span>
-            `;
-        }
     } catch (error) {
         console.error('Error updating store settings:', error);
         showNotification('❌ Error updating settings: ' + error.message);
@@ -4647,54 +3855,102 @@ async function deleteStoreVendor() {
 async function loadDevStats() {
     if (userRole !== 'developer') return;
 
-    // Load verification requests if the system is available
+    // 1. Load existing sub-sections (External functions)
     if (typeof loadVerificationRequests === 'function') {
         loadVerificationRequests();
     }
-
-    // Load unlimited products requests
+    if (typeof loadVerifiedStoresAdmin === 'function') {
+        loadVerifiedStoresAdmin();
+    }
     loadUnlimitedRequests();
 
     try {
-        // 1. Fetch all necessary collections
-        const [
-            usersSnap,
-            allStoresSnap,
-            approvedStoresSnap,
-            pendingStoresSnap,
-            deletedStoresSnap
-        ] = await Promise.all([
-            db.collection('users').get(),
-            db.collection('stores').get(),
-            db.collection('stores').where('status', '==', 'approved').get(),
-            db.collection('stores').where('status', '==', 'pending').get(),
-            db.collection('stores').where('status', '==', 'deleted').get()
+        // OPTIMIZATION: Fetch collections with limits to prevent excessive data transfer
+        const [usersSnap, allStoresSnap, pendingStoresSnap] = await Promise.all([
+            db.collection('users').limit(500).get(),  // Limit to 500 users
+            db.collection('stores').limit(500).get(), // Limit to 500 stores
+            db.collection('stores').where('status', '==', 'pending').limit(100).get() // Limit pending
         ]);
 
-        // 2. Update Stat Cards
+        // 3. Update Basic Stat Cards (Top Row)
         document.getElementById('dev-total-users').textContent = usersSnap.size;
         document.getElementById('dev-total-stores').textContent = allStoresSnap.size;
         document.getElementById('dev-pending-approvals').textContent = pendingStoresSnap.size;
 
-        // 3. Render "Pending Approvals" Table
+        // ============================================================
+        // NEW FEATURE: PRODUCT ACTIVITY STATISTICS
+        // ============================================================
+        let activeStoresCount = 0; // Stores with > 0 products
+        let prolificStores = [];   // Stores with > 2 products
+
+        allStoresSnap.forEach(doc => {
+            const data = doc.data();
+            // Ensure productCount exists (default to 0 if undefined)
+            const count = data.productCount || 0;
+
+            if (count > 0) {
+                activeStoresCount++;
+            }
+            if (count > 2) {
+                prolificStores.push({ name: data.name, count: count });
+            }
+        });
+
+        // Update "Active Stores" Count UI
+        const activeCountEl = document.getElementById('dev-active-stores-count');
+        if (activeCountEl) {
+            activeCountEl.textContent = activeStoresCount;
+        }
+
+        // Update "Top Contributors" List UI
+        const listContainer = document.getElementById('dev-prolific-stores-list');
+        if (listContainer) {
+            if (prolificStores.length === 0) {
+                listContainer.innerHTML = '<p style="color: var(--gray); font-style: italic; padding: 10px;">No stores found with more than 2 products.</p>';
+            } else {
+                // Sort by highest count first
+                prolificStores.sort((a, b) => b.count - a.count);
+
+                let listHtml = '<ul style="list-style: none; padding: 0; margin: 0;">';
+                prolificStores.forEach(store => {
+                    listHtml += `
+                        <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 600; color: var(--dark); font-size: 0.9rem;">${store.name}</span>
+                            <span style="background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700;">
+                                ${store.count} uploads
+                            </span>
+                        </li>
+                    `;
+                });
+                listHtml += '</ul>';
+                listContainer.innerHTML = listHtml;
+            }
+        }
+        // ============================================================
+        // END NEW FEATURE
+        // ============================================================
+
+        // 4. Render "Pending Approvals" Table
         let pendingHtml = '';
         if (pendingStoresSnap.empty) {
-            pendingHtml = '<p>No pending approvals.</p>';
+            pendingHtml = '<div style="padding: 20px; text-align: center; color: var(--gray);">No pending approvals.</div>';
         } else {
             pendingHtml = '<table class="stores-table"><thead><tr><th>Store Name</th><th>Owner</th><th>Category</th><th>Actions</th></tr></thead><tbody>';
             for (const storeDoc of pendingStoresSnap.docs) {
                 const storeData = storeDoc.data();
                 const ownerDoc = await db.collection('users').doc(storeData.ownerId).get();
                 const ownerName = ownerDoc.data()?.name || 'Unknown';
+                const safeId = storeDoc.id.replace(/'/g, "\\'");
+
                 pendingHtml += `
                     <tr>
-                        <td>${storeData.name}</td>
-                        <td>${ownerName}</td>
-                        <td>${storeData.category}</td>
-                        <td>
+                        <td data-label="Store Name">${storeData.name}</td>
+                        <td data-label="Owner">${ownerName}</td>
+                        <td data-label="Category">${storeData.category}</td>
+                        <td data-label="Actions">
                             <div class="action-buttons">
-                                <button onclick="approveStore('${storeDoc.id}')" class="btn-approve">Approve</button>
-                                <button onclick="rejectStore('${storeDoc.id}')" class="btn-reject">Reject</button>
+                                <button onclick="approveStore('${safeId}')" class="btn-approve">Approve</button>
+                                <button onclick="rejectStore('${safeId}')" class="btn-reject">Reject</button>
                             </div>
                         </td>
                     </tr>`;
@@ -4703,7 +3959,7 @@ async function loadDevStats() {
         }
         document.getElementById('dev-pending-stores').innerHTML = pendingHtml;
 
-        // 4. Render "All Stores" Table (UPDATED with Revoke Option)
+        // 5. Render "All Stores" Table
         let allStoresHtml = '<table class="stores-table"><thead><tr><th>Store Name</th><th>Owner</th><th>Status</th><th>Category</th><th>Actions</th></tr></thead><tbody>';
 
         for (const storeDoc of allStoresSnap.docs) {
@@ -4711,37 +3967,41 @@ async function loadDevStats() {
             const ownerDoc = await db.collection('users').doc(storeData.ownerId).get();
             const ownerName = ownerDoc.data()?.name || 'Unknown';
 
-            // Logic for status badge
             let statusClass = 'status-rejected';
             if (storeData.status === 'approved') statusClass = 'status-approved';
             else if (storeData.status === 'pending') statusClass = 'status-pending';
             else if (storeData.status === 'deleted') statusClass = 'status-deleted';
 
-            // Check if store has unlimited products
             const isUnlimited = storeData.unlimitedProducts === true;
+            const safeId = storeDoc.id.replace(/'/g, "\\'");
+            const safeName = (storeData.name || '').replace(/'/g, "\\'");
+
+            // Also display product count in the main table for quick reference
+            const prodCount = storeData.productCount || 0;
 
             allStoresHtml += `
                 <tr>
-                    <td>
+                    <td data-label="Store Name">
                         <div style="font-weight:600;">${storeData.name}</div>
                         ${isUnlimited ? '<span style="font-size:0.75rem; background:#7c3aed; color:white; padding:2px 6px; border-radius:4px; display:inline-block; margin-top:2px;"><i class="fas fa-infinity"></i> Unlimited</span>' : ''}
+                        <div style="font-size: 0.75rem; color: var(--gray); margin-top: 2px;">${prodCount} Products</div>
                     </td>
-                    <td>${ownerName}</td>
-                    <td>
+                    <td data-label="Owner">${ownerName}</td>
+                    <td data-label="Status">
                         <span class="store-status-badge ${statusClass}">
                             ${(storeData.status || 'pending').toUpperCase()}
                         </span>
                     </td>
-                    <td>${storeData.category}</td>
-                    <td>
+                    <td data-label="Category">${storeData.category}</td>
+                    <td data-label="Actions">
                         <div class="action-buttons" style="display:flex; flex-direction:column; gap:5px;">
                             ${storeData.status === 'deleted'
                     ? '<span style="color:var(--gray); font-size:0.8rem;"><i>Archived</i></span>'
-                    : `<button onclick="deleteStoreAdmin('${storeDoc.id}')" class="btn-remove" style="width:100%">Delete Store</button>`
+                    : `<button onclick="deleteStoreAdmin('${safeId}')" class="btn-remove" style="width:100%">Delete Store</button>`
                 }
-                            
+                            <button onclick="window.open(generateStoreUrl('${storeData.slug}'), '_blank')" class="btn btn-primary">Open Store</button>
                             ${isUnlimited && storeData.status !== 'deleted'
-                    ? `<button onclick="revokeUnlimitedAccess('${storeDoc.id}', '${storeData.name.replace(/'/g, "\\'")}')" class="btn-reject" style="width:100%; font-size:0.75rem; padding:4px;">
+                    ? `<button onclick="revokeUnlimitedAccess('${safeId}', '${safeName}')" class="btn-reject" style="width:100%; font-size:0.75rem; padding:4px;">
                                      <i class="fas fa-ban"></i> Revoke Unlimited
                                    </button>`
                     : ''
@@ -4754,7 +4014,7 @@ async function loadDevStats() {
         allStoresHtml += '</tbody></table>';
         document.getElementById('dev-all-stores').innerHTML = allStoresHtml;
 
-        // 5. Render Users List
+        // 6. Render Recent Users List
         let usersHtml = '<ul style="list-style:none; margin:0; padding:0;">';
         const recentUsers = await db.collection('users').orderBy('createdAt', 'desc').limit(10).get();
 
@@ -4783,7 +4043,7 @@ async function loadDevStats() {
 
     } catch (e) {
         console.error('Error loading developer stats:', e);
-        showNotification('Error loading developer stats.');
+        showNotification('Error loading developer stats.', 'error');
     }
 }
 // LOAD AND MANAGE UNLIMITED PRODUCTS REQUESTS
@@ -4830,6 +4090,9 @@ async function loadUnlimitedRequests() {
             const statusClass = data.status === 'approved' ? 'status-approved' :
                 data.status === 'rejected' ? 'status-rejected' : 'status-pending';
 
+            // FIX: Escape Store Name to prevent syntax errors with apostrophes
+            const safeStoreName = (data.storeName || '').replace(/'/g, "\\'");
+
             html += `
                 <tr>
                     <td style="font-weight: 600;">${data.storeName}</td>
@@ -4849,10 +4112,10 @@ async function loadUnlimitedRequests() {
                     <td>
                         <div class="action-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;">
                             ${data.status === 'pending' ? `
-                                <button onclick="approveUnlimitedRequest('${doc.id}', '${data.vendorEmail}', '${data.storeName}')" class="btn-approve" style="padding: 6px 12px; font-size: 0.85rem;">
+                                <button onclick="approveUnlimitedRequest('${doc.id}', '${data.vendorEmail}', '${safeStoreName}')" class="btn-approve" style="padding: 6px 12px; font-size: 0.85rem;">
                                     <i class="fas fa-check"></i> Approve
                                 </button>
-                                <button onclick="rejectUnlimitedRequest('${doc.id}', '${data.vendorEmail}', '${data.storeName}')" class="btn-reject" style="padding: 6px 12px; font-size: 0.85rem;">
+                                <button onclick="rejectUnlimitedRequest('${doc.id}', '${data.vendorEmail}', '${safeStoreName}')" class="btn-reject" style="padding: 6px 12px; font-size: 0.85rem;">
                                     <i class="fas fa-times"></i> Reject
                                 </button>
                             ` : `
@@ -4883,7 +4146,6 @@ async function loadUnlimitedRequests() {
         `;
     }
 }
-
 // APPROVE UNLIMITED PRODUCTS REQUEST
 async function approveUnlimitedRequest(requestId, vendorEmail, storeName) {
     if (!confirm(`Approve unlimited products for ${storeName}?`)) return;
@@ -4955,7 +4217,7 @@ async function sendUnlimitedApprovalEmail(vendorEmail, storeName, approved, reas
 
         const message = approved
             ? `Great news! Your request for unlimited products has been approved. You can now upload as many products as you need to your store. Log in to your vendor dashboard to continue.`
-            : `Your request for unlimited products has been reviewed and rejected. Reason: ${reason}\n\nYou can still add up to 30 products. Please contact us if you have any questions.`;
+            : `Your request for unlimited products has been reviewed and rejected. Reason: ${reason}\n\nYou can still add up to 20 products. Please contact us if you have any questions.`;
 
         emailjs.send('service_byu91od', 'template_mgtx04w', {
             from_name: 'MarketSpace Admin',
@@ -5072,14 +4334,20 @@ async function deleteUserAdmin(userId) {
 
 // --- 11. LEGACY STORES PAGE ---
 
+// --- UPDATED: LOAD STORES LIST WITH CUSTOM SORTING ---
 async function loadStoresList() {
     const container = document.getElementById('stores-list-container');
     container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Loading stores...</p>';
 
     try {
-        const snapshot = await db.collection('stores').where('status', '==', 'approved').get();
+        // OPTIMIZATION: Load approved stores with pagination limit
+        const snapshot = await db.collection('stores')
+            .where('status', '==', 'approved')
+            .limit(100)  // Load first 100 stores only
+            .get();
+
         if (snapshot.empty) {
-            container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No stores available yet.</p>';
+            container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">stores Not loading . Refresh</p>';
             storesCache = [];
             return;
         }
@@ -5090,7 +4358,33 @@ async function loadStoresList() {
             storesCache.push({ id: doc.id, data: doc.data() });
         });
 
-        // Render initial list
+        // --- NEW SORTING LOGIC START ---
+        storesCache.sort((a, b) => {
+            const dataA = a.data;
+            const dataB = b.data;
+
+            // Priority 1: Verified Stores First
+            const isVerifiedA = dataA.isVerified === true;
+            const isVerifiedB = dataB.isVerified === true;
+            if (isVerifiedA && !isVerifiedB) return -1;
+            if (!isVerifiedA && isVerifiedB) return 1;
+
+            // Priority 2: Stores with Background Images Second
+            const hasBgA = dataA.backgroundImageUrl && dataA.backgroundImageUrl.trim() !== '';
+            const hasBgB = dataB.backgroundImageUrl && dataB.backgroundImageUrl.trim() !== '';
+            if (hasBgA && !hasBgB) return -1;
+            if (!hasBgA && hasBgB) return 1;
+
+            // Priority 3: More Products Third (Descending Order)
+            // Note: This relies on 'productCount' existing in your store document. 
+            // If it doesn't exist, it defaults to 0.
+            const countA = parseInt(dataA.productCount || 0);
+            const countB = parseInt(dataB.productCount || 0);
+            return countB - countA;
+        });
+        // --- NEW SORTING LOGIC END ---
+
+        // OPTIMIZATION: Render stores immediately
         renderStores(storesCache);
     } catch (e) {
         console.error(e);
@@ -5118,20 +4412,19 @@ function renderStores(stores) {
                     <div class="store-status">
                         <i class="fas fa-store"></i> Open
                     </div>
-                    <div class="store-header" style="${data.backgroundImageUrl ?
+                    <div class="store-header" onclick="navigateTo('store-detail', '${docId}')" style="cursor: pointer; ${data.backgroundImageUrl ?
                 `background: url('${data.backgroundImageUrl}') center/cover no-repeat;` :
                 `background: linear-gradient(135deg, var(--${themeName}), color-mix(in srgb, var(--${themeName}) 80%, black 20%))`}">
                         <div class="store-facade"></div>
                         <div class="store-logo">${(data.name || '').substring(0, 2).toUpperCase()}</div>
                     </div>
                     <div class="store-content">
-                        <h3 style="display: flex; align-items: center; gap: 3px;">
+                        <h3 style="display: flex; align-items: center; gap: 3px; cursor: pointer;" onclick="navigateTo('store-detail', '${docId}')">
                             ${data.name}
-                            ${data.isVerified ? '<span class="blue-tick-badge" title="Verified Store"><i class="fas fa-check"></i></span>' : ''}                        </h3>
+                            ${data.isVerified ? '<span class="blue-tick-badge" title="Verified Store"><img src="veri.png" alt="Verified" class="verification-icon"></span>' : ''}                        </h3>
                         <div class="store-category">
                             <i class="fas fa-tag"></i> ${data.category || ''}
                         </div>
-                        <!-- ADD LOCATION DISPLAY -->
                         ${data.storeLocation ? `
                         <div class="store-location" style="display: flex; align-items: center; gap: 5px; color: var(--gray); font-size: 0.9rem; margin: 5px 0;">
                             <i class="fas fa-map-marker-alt" style="font-size: 0.8rem;"></i>
@@ -5161,27 +4454,52 @@ function renderStores(stores) {
     container.innerHTML = html;
 }
 
-// Wire up the search input to filter the cached stores
-document.addEventListener('DOMContentLoaded', () => {
-    const search = document.getElementById('store-search-input');
-    if (!search) return;
+// OPTIMIZATION: Debounced store search function
+const debouncedStoreSearch = debounce((e) => {
+    const q = (e.target.value || '').trim().toLowerCase();
 
-    search.addEventListener('input', (e) => {
-        const q = (e.target.value || '').trim().toLowerCase();
-        if (!q) {
-            renderStores(storesCache);
-            return;
-        }
-
-        const filtered = storesCache.filter(s => {
+    // Filter first
+    let filtered = storesCache;
+    if (q) {
+        filtered = storesCache.filter(s => {
             const name = (s.data.name || '').toLowerCase();
             const cat = (s.data.category || '').toLowerCase();
             const location = (s.data.storeLocation || '').toLowerCase();
             return name.includes(q) || cat.includes(q) || location.includes(q);
         });
+    }
 
-        renderStores(filtered);
+    // Apply Same Sorting Logic to Search Results
+    filtered.sort((a, b) => {
+        const dataA = a.data;
+        const dataB = b.data;
+
+        // 1. Verified
+        if (dataA.isVerified && !dataB.isVerified) return -1;
+        if (!dataA.isVerified && dataB.isVerified) return 1;
+
+        // 2. Background Image
+        const hasBgA = dataA.backgroundImageUrl && dataA.backgroundImageUrl.trim() !== '';
+        const hasBgB = dataB.backgroundImageUrl && dataB.backgroundImageUrl.trim() !== '';
+        if (hasBgA && !hasBgB) return -1;
+        if (!hasBgA && hasBgB) return 1;
+
+        // 3. Product Count
+        const countA = parseInt(dataA.productCount || 0);
+        const countB = parseInt(dataB.productCount || 0);
+        return countB - countA;
     });
+
+    renderStores(filtered);
+}, 250);
+
+// Wire up the search input to filter the cached stores
+document.addEventListener('DOMContentLoaded', () => {
+    const search = document.getElementById('store-search-input');
+    if (!search) return;
+
+    // OPTIMIZATION: Use debounced search
+    search.addEventListener('input', debouncedStoreSearch);
 });
 
 // Function to filter stores from mobile search
@@ -5199,10 +4517,19 @@ function filterStoresFromMobileSearch(query) {
         return name.includes(q) || cat.includes(q) || location.includes(q);
     });
 
+    // Sort filtered results: verified stores first
+    filtered.sort((a, b) => {
+        if (a.data.isVerified && !b.data.isVerified) return -1;
+        if (!a.data.isVerified && b.data.isVerified) return 1;
+        return (a.data.name || '').localeCompare(b.data.name || '');
+    });
+
     renderStores(filtered);
 }
 
 // --- UPDATED STORE DETAIL FUNCTION ---
+// --- UPDATED: loadStoreDetail (Amazon Style) ---
+// --- UPDATED: loadStoreDetail (Amazon Style) ---
 // --- UPDATED: loadStoreDetail (Amazon Style) ---
 async function loadStoreDetail(slug) {
     const container = document.getElementById('store-detail-content');
@@ -5212,20 +4539,94 @@ async function loadStoreDetail(slug) {
     const highlightProductId = sessionStorage.getItem('highlightProductId');
     sessionStorage.removeItem('highlightProductId'); // Clear it after reading
 
+    console.log('🔍 Searching for store:', slug);
+
     try {
-        // Fetch store data
-        const storeDoc = await db.collection('stores').doc(slug).get();
-        if (!storeDoc.exists) {
-            container.innerHTML = '<div class="store-empty-state"><i class="fas fa-store-slash"></i><h3>Store Not Found</h3><p>The store you are looking for does not exist.</p><button onclick="navigateTo(\'stores\')" class="btn btn-primary">Back to Stores</button></div>';
+        let storeDoc = null;
+
+        // OPTIMIZATION: Fetch only first 100 approved stores instead of all
+        const allApprovedStores = await db.collection('stores')
+            .where('status', '==', 'approved')
+            .limit(100)
+            .get();
+
+        // Filter client-side for matching slug
+        const slugLower = slug.toLowerCase();
+        storeDoc = allApprovedStores.docs.find(doc => {
+            const data = doc.data();
+            const docSlug = (data.slug || '').toLowerCase();
+            const docId = doc.id.toLowerCase();
+            return docSlug === slugLower || docId === slugLower;
+        });
+
+        if (storeDoc) {
+            console.log(`✅ Found approved store`);
+        }
+
+        // STEP 2: If not found and user is logged in as owner/developer, try direct access
+        if (!storeDoc && currentUser) {
+            try {
+                const directDoc = await db.collection('stores').doc(slug).get();
+                if (directDoc.exists) {
+                    const data = directDoc.data();
+                    const isOwner = data.ownerId === currentUser.uid;
+                    const isDev = userRole === 'developer';
+
+                    if (isOwner || isDev) {
+                        storeDoc = directDoc;
+                        console.log(`✅ Found store via owner/developer access`);
+                    }
+                }
+            } catch (directError) {
+                // Permission denied - this is expected for non-owners
+                console.log('Direct access blocked (expected for non-owners)');
+            }
+        }
+
+        // STEP 3: If still not found, show friendly error
+        if (!storeDoc) {
+            container.innerHTML = `
+                <div class="store-empty-state">
+                    <i class="fas fa-store-slash"></i>
+                    <h3>Store Not Found</h3>
+                    <p>The store you are looking for does not exist or PLease check your network connection and try again</p>
+                    <button onclick="navigateTo('stores')" class="btn btn-primary">Back to Stores</button>
+                </div>
+            `;
             return;
         }
 
         const storeData = storeDoc.data();
+        const resolvedStoreId = storeDoc.id || slug;
+
+        // Check if store is approved (for public access) or if user is owner/developer
+        const isStoreApproved = storeData.status === 'approved';
+        const isOwner = currentUser && storeData.ownerId === currentUser.uid;
+        const isDev = userRole === 'developer';
+
+        // If store is not approved and user is not owner/developer, show message
+        if (!isStoreApproved && !isOwner && !isDev) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 100px 20px;">
+                    <i class="fas fa-clock" style="font-size: 4rem; color: #f59e0b; margin-bottom: 20px;"></i>
+                    <h2 style="color: var(--dark); margin-bottom: 15px;">Store Not Available</h2>
+                    <p style="color: var(--gray); margin-bottom: 25px;">This store is currently ${storeData.status || 'pending approval'}. Please check back later.</p>
+                    <button onclick="navigateTo('stores')" class="btn btn-primary">
+                        <i class="fas fa-store"></i> Browse Other Stores
+                    </button>
+                </div>
+            `;
+            return;
+        }
 
         document.title = `${storeData.name} | MarketSpace`;
 
-        // Fetch products for this store
-        const productsSnap = await db.collection('products').where('storeId', '==', slug).get();
+        // OPTIMIZATION: Load only first 50 products for store instead of all
+        const productsSnap = await db.collection('products')
+            .where('storeId', '==', resolvedStoreId)
+            .limit(50)
+            .get();
+
         const products = [];
 
         productsSnap.forEach(doc => {
@@ -5237,9 +4638,10 @@ async function loadStoreDetail(slug) {
                 originalPrice: productData.originalPrice || null,
                 image: productData.imageUrl || '',
                 rating: productData.rating || 4.5,
-                reviews: productData.reviews || Math.floor(Math.random() * 200), // Mock reviews if missing
+                reviews: productData.reviews || Math.floor(Math.random() * 200),
                 category: productData.category || 'General',
                 quantity: productData.quantity || 0,
+                currency: productData.currency || 'GHS',
                 discount: productData.discount || null,
                 savings: productData.savings || null,
                 fastShipping: productData.fastShipping || false
@@ -5254,7 +4656,7 @@ async function loadStoreDetail(slug) {
         };
         const themeColor = storeData.backgroundImageUrl ? 'transparent' : (themeMap[storeData.theme] || themeMap['primary']);
 
-        // Render HTML
+        // Render HTML - UPDATED WITH PHONE NUMBER
         container.innerHTML = `
             <div class="store-info-section" style="${storeData.backgroundImageUrl ?
                 `background: url('${storeData.backgroundImageUrl}') center/cover no-repeat; position: relative; color: white;` :
@@ -5268,7 +4670,12 @@ async function loadStoreDetail(slug) {
                     </div>
                     <div style="flex: 1; min-width: 250px;">
                         <h1 style="margin: 0; font-size: 2rem; color:white;">${storeData.name}</h1>
-                        <p style="margin: 5px 0; opacity: 0.9; font-size: 1rem;"><i class="fas fa-map-marker-alt"></i> ${storeData.storeLocation || 'Online Store'}</p>
+                        
+                        <div style="margin: 5px 0; opacity: 0.9; font-size: 1rem; display: flex; flex-direction: column; gap: 5px;">
+                            <span><i class="fas fa-map-marker-alt"></i> ${storeData.storeLocation || 'Online Store'}</span>
+                            ${storeData.contactPhone ? `<span><i class="fas fa-phone"></i> ${storeData.contactPhone}</span>` : ''}
+                        </div>
+
                         <div style="display: flex; gap: 10px; margin-top: 10px; font-size: 0.9rem;">
                             <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 4px;"><i class="fas fa-star"></i> ${storeData.rating || '4.8'} Positive</span>
                             <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 4px;"><i class="fas fa-box"></i> ${products.length} Items</span>
@@ -5316,20 +4723,20 @@ async function loadStoreDetail(slug) {
                                     </span>
                                     <span class="rating-count">${product.reviews.toLocaleString()}</span>
                                 </div>
-                                    <div class="product-price">
-                                        <span class="current-price">${formatCurrency(product.price, product.currency || 'GHS')}</span>
-                                        
-                                        ${hasDiscount ? `<span class="original-price">${formatCurrency(product.originalPrice, product.currency || 'GHS')}</span>` : ''}
-                                    </div>
+                                
+                                <div class="product-price">
+                                    <span class="current-price">${formatCurrency(product.price, product.currency || 'GHS')}</span>
+                                    ${hasDiscount ? `<span class="original-price">${formatCurrency(product.originalPrice, product.currency || 'GHS')}</span>` : ''}
+                                </div>
 
-                                    <div class="product-quantity ${product.quantity < 5 ? 'low' : ''}">
-                                        ${product.quantity < 5 && product.quantity > 0 ? `Only ${product.quantity} left in stock - order soon.` :
+                                <div class="product-quantity ${product.quantity < 5 ? 'low' : ''}">
+                                    ${product.quantity < 5 && product.quantity > 0 ? `Only ${product.quantity} left in stock` :
                             product.quantity > 0 ? 'In Stock' : 'Currently Unavailable'}
-                                    </div>
+                                </div>
 
-                                    <div class="product-actions">
-                                        ${currentUser && userRole === 'customer' ? `
-                                        <button class="add-to-cart-btn" onclick="addToCart('${product.id}', '${slug}', ${JSON.stringify({
+                                <div class="product-actions">
+                                    ${currentUser && userRole === 'customer' ? `
+                                    <button class="add-to-cart-btn" onclick="addToCart('${product.id}', '${resolvedStoreId}', ${JSON.stringify({
                                 name: product.name,
                                 price: product.price,
                                 currency: product.currency || 'GHS',
@@ -5337,10 +4744,10 @@ async function loadStoreDetail(slug) {
                                 imageUrl: product.image,
                                 quantity: product.quantity
                             }).replace(/"/g, '&quot;')})">
-                                            Add to Cart
-                                        </button>
-                                    
-                                    <button class="btn-buy" onclick="buyNow('${product.id}', '${slug}', ${JSON.stringify({
+                                        Add to Cart
+                                    </button>
+                                
+                                    <button class="btn-buy" onclick="buyNow('${product.id}', '${resolvedStoreId}', ${JSON.stringify({
                                 name: product.name,
                                 price: product.price,
                                 currency: product.currency || 'GHS',
@@ -5356,8 +4763,8 @@ async function loadStoreDetail(slug) {
                                     </button>
                                     `}
                                     
-                                    <button onclick="startChatWithVendor('${storeData.ownerId}', '${storeData.name}', '${slug}', '${product.id}', '${product.name.replace(/'/g, "\\'")}')" 
-                                            class="btn btn-outline" style="width: 100%; text-align: center;justify-content: center; background: linear-gradient(135deg, rgba(255, 41, 255,1), rgba(84, 84, 255, 1)); color:white;">
+                                    <button onclick="startChatWithVendor('${storeData.ownerId}', '${storeData.name}', '${resolvedStoreId}', '${product.id}', '${product.name.replace(/'/g, "\\'")}')" 
+                                            class="btn btn-outline" style="width: 100%; text-align: center; justify-content: center; background: linear-gradient(135deg, rgba(255, 41, 255,1), rgba(84, 84, 255, 1)); color:white;">
                                         Negotiate
                                     </button>
                                 </div>
@@ -5377,12 +4784,10 @@ async function loadStoreDetail(slug) {
 
         // Scroll to highlighted product if it was clicked from search
         if (highlightProductId) {
-            // Use setTimeout to ensure the DOM is updated before scrolling
             setTimeout(() => {
                 const highlightedElement = document.getElementById(`product-${highlightProductId}`);
                 if (highlightedElement) {
                     highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Add a pulse animation
                     highlightedElement.style.animation = 'pulse-highlight 2s ease-in-out infinite';
                 }
             }, 100);
@@ -5390,40 +4795,54 @@ async function loadStoreDetail(slug) {
 
     } catch (error) {
         console.error('Error loading store detail:', error);
+
         container.innerHTML = `
             <div style="text-align: center; padding: 100px 20px;">
                 <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ef4444; margin-bottom: 20px;"></i>
                 <h3>Something went wrong</h3>
                 <p>We couldn't load this store. Please try again later.</p>
-                <button onclick="loadStoreDetail('${slug}')" class="btn btn-primary" style="margin-top: 15px;">Retry</button>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 25px;">
+                    <button onclick="loadStoreDetail('${slug}')" class="btn btn-primary">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                    <button onclick="navigateTo('stores')" class="btn btn-outline">
+                        <i class="fas fa-store"></i> Browse Stores
+                    </button>
+                </div>
             </div>
         `;
     }
 }
-
+// --- Load Store Public Page ---
 // --- Load Store Public Page ---
 async function loadStorePublic(storeSlug) {
     const container = document.getElementById('store-public-content');
 
     try {
-        // Fetch store data
-        const storeDoc = await db.collection('stores').doc(storeSlug).get();
+        // Fetch store data: try doc id first, then fallback to slug field query
+        let storeDoc = await db.collection('stores').doc(storeSlug).get();
 
+        // If direct doc lookup failed (old stores may use auto-id), try querying by slug field
         if (!storeDoc.exists) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 100px 20px;">
-                    <i class="fas fa-store-slash" style="font-size: 4rem; color: var(--gray); margin-bottom: 20px;"></i>
-                    <h2 style="color: var(--dark); margin-bottom: 15px;">Store Not Found</h2>
-                    <p style="color: var(--gray); margin-bottom: 25px;">The store you're looking for doesn't exist or has been removed.</p>
-                    <button onclick="navigateTo('home')" class="btn btn-primary">
-                        <i class="fas fa-home"></i> Go to Homepage
-                    </button>
-                </div>
-            `;
-            return;
+            const fallback = await db.collection('stores').where('slug', '==', storeSlug).limit(1).get();
+            if (fallback.empty) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 100px 20px;">
+                        <i class="fas fa-store-slash" style="font-size: 4rem; color: var(--gray); margin-bottom: 20px;"></i>
+                        <h2 style="color: var(--dark); margin-bottom: 15px;">Store Not Found</h2>
+                        <p style="color: var(--gray); margin-bottom: 25px;">The store you're looking for doesn't exist or has been removed.</p>
+                        <button onclick="navigateTo('home')" class="btn btn-primary">
+                            <i class="fas fa-home"></i> Go to Homepage
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            storeDoc = fallback.docs[0];
         }
 
         const storeData = storeDoc.data();
+        const resolvedStoreId = storeDoc.id || storeSlug;
 
         document.title = `${storeData.name} | MarketSpace`;
 
@@ -5444,7 +4863,7 @@ async function loadStorePublic(storeSlug) {
 
         // Fetch store products
         const productsSnap = await db.collection('products')
-            .where('storeId', '==', storeSlug)
+            .where('storeId', '==', resolvedStoreId)
             .where('quantity', '>', 0)
             .get();
 
@@ -5471,9 +4890,8 @@ async function loadStorePublic(storeSlug) {
 
         const themeColor = storeData.backgroundImageUrl ? 'transparent' : (themeMap[storeData.theme] || themeMap['primary']);
 
-        // Render store page
+        // Render store page - UPDATED WITH PHONE NUMBER
         container.innerHTML = `
-            <!-- Store Header -->
             <div class="store-public-header" style="${storeData.backgroundImageUrl ?
                 `background: url('${storeData.backgroundImageUrl}') center/cover no-repeat;` :
                 `background: linear-gradient(135deg, ${themeColor}, ${themeColor}80);`} color: white; padding: 40px; border-radius: 12px; margin-bottom: 30px; position: relative;">
@@ -5487,12 +4905,19 @@ async function loadStorePublic(storeSlug) {
                             <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem;">
                                 <i class="fas fa-tag"></i> ${storeData.category}
                             </span>
-                            <!-- ADD LOCATION BADGE -->
+                            
                             ${storeData.storeLocation ? `
                             <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem;">
                                 <i class="fas fa-map-marker-alt"></i> ${storeData.storeLocation}
                             </span>
                             ` : ''}
+
+                            ${storeData.contactPhone ? `
+                            <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem;">
+                                <i class="fas fa-phone"></i> ${storeData.contactPhone}
+                            </span>
+                            ` : ''}
+                            
                             <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem;">
                                 <i class="fas fa-box"></i> ${products.length} products
                             </span>
@@ -5501,7 +4926,6 @@ async function loadStorePublic(storeSlug) {
                     </div>
                 </div>
                 
-                <!-- Store Actions -->
                 <div style="display: flex; gap: 15px; margin-top: 30px;">
                     <button onclick="navigateTo('customer')" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px);">
                         <i class="fas fa-shopping-bag"></i> Browse All Stores
@@ -5509,14 +4933,12 @@ async function loadStorePublic(storeSlug) {
                 </div>
             </div>
             
-            <!-- Store Products -->
             <div style="margin-top: 40px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                     <h2 style="color: var(--dark); margin: 0;">Store Products</h2>
                     <span style="color: var(--gray);">${products.length} items</span>
                 </div>
                 
-                <!-- Search Bar -->
                 <div style="margin-bottom: 25px;">
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <div style="flex: 1; position: relative;">
@@ -5538,7 +4960,7 @@ async function loadStorePublic(storeSlug) {
                 <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px;">
                     ${products.map(product => {
                     const chatButton = `
-                            <button onclick="startChatWithVendor('${storeData.ownerId}', '${storeData.name}', '${storeSlug}', '${product.id}', '${product.name.replace(/'/g, "\\'")}')" 
+                            <button onclick="startChatWithVendor('${storeData.ownerId}', '${storeData.name}', '${resolvedStoreId}', '${product.id}', '${product.name.replace(/'/g, "\\'")}')" 
                                     class="btn btn-outline" style="width: 100%; margin-top: 5px; border-color: var(--secondary); color: var(--secondary);">
                                 <i class="fas fa-comments"></i> Negotiate / Chat
                             </button>
@@ -5566,7 +4988,7 @@ async function loadStorePublic(storeSlug) {
                                     </span>
                                 </div>
                                 ${currentUser && userRole === 'customer' ? `
-                                <button onclick="addToCart('${product.id}', '${storeSlug}', ${JSON.stringify({
+                                <button onclick="addToCart('${product.id}', '${resolvedStoreId}', ${JSON.stringify({
                                 name: product.name,
                                 price: product.price,
                                 currency: product.currency || 'GHS',
@@ -5595,7 +5017,6 @@ async function loadStorePublic(storeSlug) {
                 `}
             </div>
             
-            <!-- Back Button -->
             <div style="text-align: center; margin-top: 40px;">
                 <button onclick="navigateTo('stores')" class="btn btn-outline" style="padding: 12px 30px;">
                     <i class="fas fa-arrow-left"></i> Back to All Stores
@@ -5616,29 +5037,40 @@ async function loadStorePublic(storeSlug) {
         `;
     }
 }
-
 // --- 12. INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Get URL Parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const pageParam = urlParams.get('page') || 'home';
+    const pageParam = urlParams.get('page');
     const storeParam = urlParams.get('store');
 
-    if (!checkUrlForStore()) {
+    // 2. Intelligent Routing Logic
+    if (pageParam) {
+        // A specific page was requested (e.g., ?page=products)
         navigateTo(pageParam, storeParam);
+    } else if (storeParam) {
+        // A store URL was shared (e.g., ?store=my-shop)
+        // We route this directly to the 'store-detail' page logic
+        console.log("Direct store access detected:", storeParam);
+        navigateTo('store-detail', storeParam);
+    } else {
+        // Default to Home if no parameters exist
+        navigateTo('home');
     }
 
-    updateActiveNav(pageParam);
+    // 3. Update UI Elements
+    if (pageParam) updateActiveNav(pageParam);
 
+    // 4. Start Clocks/Timers
     setInterval(() => {
         const now = new Date();
         const countdownEl = document.getElementById('countdown');
-        // Only try to set innerText if the element actually exists on the current page
         if (countdownEl) {
             countdownEl.innerText = now.toLocaleTimeString();
         }
     }, 1000);
 
-    // Add image preview for product image upload
+    // 5. Initialize Image Upload Previews
     const prodImageInput = document.getElementById('prod-image');
     if (prodImageInput) {
         prodImageInput.addEventListener('change', function (e) {
@@ -5658,7 +5090,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
 // Terms of Service Functions
 function openTosModal() {
     const modal = document.getElementById('tos-modal');
@@ -6550,7 +5981,7 @@ document.addEventListener('keydown', function (e) {
         }
     }
 });
-// ... [Previous code remains unchanged] ...
+
 
 // --- Helper Function for Image Compression ---
 function compressImage(file, maxWidth, maxHeight, quality) {
@@ -6594,7 +6025,7 @@ function compressImage(file, maxWidth, maxHeight, quality) {
 
 // ========== UPDATED: Product Form Handler (Auto-Compression) ==========
 // Constants for product limits
-const PRODUCT_LIMIT = 30;
+const PRODUCT_LIMIT = 20;
 
 // Check product count against limit
 async function checkProductLimit() {
@@ -6714,6 +6145,12 @@ document.getElementById('add-product-form')?.addEventListener('submit', async (e
     const category = document.getElementById('prod-category').value;
     const imageFile = document.getElementById('prod-image').files[0];
 
+    // enforce image requirement
+    if (!imageFile) {
+        showNotification('❌ Product image is required.');
+        return;
+    }
+
     // Show loading
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
@@ -6782,6 +6219,10 @@ document.getElementById('add-product-form')?.addEventListener('submit', async (e
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        await db.collection('stores').doc(currentStoreData.docId).update({
+            productCount: firebase.firestore.FieldValue.increment(1)
+        });
+
         showNotification('✅ Product added successfully!');
         document.getElementById('add-product-form').reset();
 
@@ -6799,43 +6240,8 @@ document.getElementById('add-product-form')?.addEventListener('submit', async (e
         submitBtn.disabled = false;
     }
 });
-// --- Hero Section Image Slider ---
-document.addEventListener('DOMContentLoaded', () => {
-    const heroSection = document.querySelector('.hero');
 
-    // Array of images to loop through
-    // You can replace these URLs with your own image paths (e.g., 'cover2.jpg')
-    const heroImages = [
-        'cover1.jpg',
-        'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1470&auto=format&fit=crop',
-        'https://media.licdn.com/dms/image/v2/D4E05AQG_5KdAufMAXQ/feedshare-thumbnail_720_1280/feedshare-thumbnail_720_1280/0/1720806417985?e=2147483647&v=beta&t=lzuPm8uEzPFfu9wdHvLHQLsXvHBxSBrQg2Wnk0NqXBc',
-        'https://www.knust.edu.gh/sites/default/files/2021-12/Fresh%20Foods%20Fair.jpg',
-        'https://www.knust.edu.gh/sites/default/files/2018-04/KSB%20Students%20Reach%20Out%20to%20Traders.jpg',
-        'https://media.evendo.com/locations-resized/ShoppingImages/360x263/d9ac0d69-4543-4150-ac55-d9eb30b63c0c',
-        'https://businessnes.com/wp-content/uploads/2019/10/edgar-chaparro-AAHxr7ZvCLs-unsplash.jpg',
-        'https://fourthwall.com/webflow-cdn/63ff7c6ecc83f9ec7ffe916b/689548323e6d743a377abd3f_15backtoschoo-ezgif.com-png-to-webp-converter.webp',
-        'https://www.campusrepghana.com/assets/Background%20Transition3-DZu6pee2.jpg'
-    ];
 
-    let currentImageIndex = 0;
-
-    // Preload images to prevent flickering/white flashes
-    heroImages.forEach((src) => {
-        const img = new Image();
-        img.src = src;
-    });
-
-    // Function to change background
-    function rotateHeroImage() {
-        if (!heroSection) return;
-
-        currentImageIndex = (currentImageIndex + 1) % heroImages.length;
-        heroSection.style.backgroundImage = `url('${heroImages[currentImageIndex]}')`;
-    }
-
-    // Change image every 5 seconds (5000ms)
-    setInterval(rotateHeroImage, 5000);
-});
 // --- Social Login Handler ---
 async function handleSocialLogin(providerName) {
     let provider;
@@ -7003,16 +6409,30 @@ function renderFoodPage(page) {
     // Update Counts
     document.getElementById('food-count').textContent = `${start + 1}-${end} of ${totalItems} items`;
 
-    // Update Pagination UI
+    // Update Pagination UI (Max 5 on desktop, Max 3 on mobile)
     const pageNumbersEl = document.getElementById('food-page-numbers');
     if (pageNumbersEl) {
         pageNumbersEl.innerHTML = '';
-        for (let i = 1; i <= totalPages; i++) {
-            if (i > 5 && i < totalPages) continue; // Simple truncation logic
 
+        // Determine max visible pages based on screen width
+        const isMobile = window.innerWidth <= 768;
+        const maxVisible = isMobile ? 3 : 5;
+        const halfWindow = Math.floor(maxVisible / 2);
+
+        // Simple logic to show a window of pages
+        let startPage = Math.max(1, page - halfWindow);
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+        // Adjust start if we are near the end
+        if (endPage - startPage < maxVisible - 1) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
             const span = document.createElement('span');
             span.className = 'page-number' + (i === page ? ' active' : '');
             span.textContent = i;
+            span.style.cursor = 'pointer';
             span.onclick = () => renderFoodPage(i);
             pageNumbersEl.appendChild(span);
         }
@@ -7356,56 +6776,83 @@ document.getElementById('forgot-password-modal')?.addEventListener('click', func
         closeForgotPasswordModal();
     }
 });
-// --- Load Reviews Logic ---
+// --- Load Reviews Logic (FIXED) ---
 async function loadReviewsForProduct(productId) {
     const listContainer = document.getElementById('reviews-list');
+    let snapshot;
 
     try {
-        // Query the 'reviews' collection where productId matches
-        const snapshot = await db.collection('reviews')
+        // Attempt to fetch with sorting (Requires Firestore Index)
+        snapshot = await db.collection('reviews')
             .where('productId', '==', productId)
             .orderBy('createdAt', 'desc')
             .limit(10)
             .get();
 
-        if (snapshot.empty) {
-            listContainer.innerHTML = `<p style="color:var(--gray); font-style:italic;">No reviews yet. Be the first to review!</p>`;
+    } catch (e) {
+        console.error("Primary fetch failed:", e);
+
+        // If the specific error is 'failed-precondition' (Missing Index),
+        // fallback to a simple query without sorting
+        if (e.code === 'failed-precondition') {
+            console.log("⚠️ Missing Index: Falling back to simple fetch.");
+            try {
+                snapshot = await db.collection('reviews')
+                    .where('productId', '==', productId)
+                    .get();
+            } catch (err) {
+                console.error("Fallback fetch failed:", err);
+                listContainer.innerHTML = `<p style="color:var(--danger);">Error loading reviews.</p>`;
+                return;
+            }
+        } else {
+            listContainer.innerHTML = `<p style="color:var(--danger);">Error loading reviews.</p>`;
             return;
         }
-
-        let html = '';
-        snapshot.forEach(doc => {
-            const r = doc.data();
-            const date = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString() : 'Recently';
-
-            html += `
-                <div class="review-item">
-                    <div class="review-user">
-                        <div class="review-avatar">${r.userName.charAt(0).toUpperCase()}</div>
-                        <span class="review-username">${r.userName}</span>
-                    </div>
-                    <div class="review-stars">
-                        ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}
-                        <span class="review-date">${date}</span>
-                    </div>
-                    <p class="review-text">${r.comment}</p>
-                </div>
-            `;
-        });
-
-        listContainer.innerHTML = html;
-
-    } catch (e) {
-        console.error("Error loading reviews:", e);
-        // Note: If you haven't created the composite index in Firebase yet, this might fail on the orderBy.
-        // Fallback for simple query if index is missing:
-        if (e.code === 'failed-precondition') {
-            console.log("Missing index, falling back to simple fetch");
-            const simpleSnap = await db.collection('reviews').where('productId', '==', productId).get();
-            // (Render logic similar to above but without sorting)
-        }
     }
+
+    // RENDER LOGIC (Runs for both success or fallback)
+    if (!snapshot || snapshot.empty) {
+        listContainer.innerHTML = `<p style="color:var(--gray); font-style:italic;">No reviews yet. Be the first to review!</p>`;
+        return;
+    }
+
+    let html = '';
+
+    // Convert docs to array to sort manually if we used the fallback
+    let reviewsData = [];
+    snapshot.forEach(doc => {
+        reviewsData.push(doc.data());
+    });
+
+    // If we fell back (no index), we need to sort manually by date in JS
+    reviewsData.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        return dateB - dateA; // Newest first
+    });
+
+    reviewsData.forEach(r => {
+        const date = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString() : 'Recently';
+
+        html += `
+            <div class="review-item">
+                <div class="review-user">
+                    <div class="review-avatar">${(r.userName || 'U').charAt(0).toUpperCase()}</div>
+                    <span class="review-username">${r.userName || 'Customer'}</span>
+                </div>
+                <div class="review-stars">
+                    ${'★'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}
+                    <span class="review-date" style="margin-left:auto; font-size:0.75rem; color:#999;">${date}</span>
+                </div>
+                <p class="review-text">${r.comment || ''}</p>
+            </div>
+        `;
+    });
+
+    listContainer.innerHTML = html;
 }
+
 
 // --- Submit Review Logic ---
 async function submitProductReview(e, productId, storeId) {
@@ -7684,7 +7131,7 @@ async function updateProductLimitUI() {
 }
 // --- NEW: Revoke Unlimited Access Function ---
 async function revokeUnlimitedAccess(storeId, storeName) {
-    if (!confirm(`Are you sure you want to REVOKE unlimited product uploads for "${storeName}"?\n\nThey will be restricted to the standard limit of 30 products.`)) return;
+    if (!confirm(`Are you sure you want to REVOKE unlimited product uploads for "${storeName}"?\n\nThey will be restricted to the standard limit of 15 products.`)) return;
 
     try {
         // 1. Update the store document to remove the flag
@@ -7716,5 +7163,442 @@ async function revokeUnlimitedAccess(storeId, storeName) {
     } catch (error) {
         console.error("Error revoking access:", error);
         showNotification('❌ Error: ' + error.message);
+    }
+}
+// --- Card Slideshow Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Select all slideshow containers
+    const slideshows = document.querySelectorAll('.card-slideshow');
+
+    slideshows.forEach(slideshow => {
+        const images = slideshow.querySelectorAll('img');
+
+        // Only run if there is more than 1 image
+        if (images.length > 1) {
+            let currentIndex = 0;
+
+            setInterval(() => {
+                // Remove active class from current image
+                images[currentIndex].classList.remove('active');
+
+                // Move to next image index (loop back to 0 if at end)
+                currentIndex = (currentIndex + 1) % images.length;
+
+                // Add active class to next image
+                images[currentIndex].classList.add('active');
+            }, 3000); // Change image every 3 seconds
+        }
+    });
+});
+// --- Auto Approve Function ---
+async function scheduleAutoApproval(storeSlug) {
+    console.log(`⏳ Auto-approval timer started for: ${storeSlug} (2 minutes)`);
+
+    // 120,000 milliseconds = 2 minutes
+    setTimeout(async () => {
+        try {
+            // 1. Fetch the store document again to check current status
+            const storeRef = db.collection('stores').doc(storeSlug);
+            const doc = await storeRef.get();
+
+            if (!doc.exists) return;
+
+            const data = doc.data();
+
+            // 2. Only approve if it is STILL 'pending'
+            // This prevents overwriting if a developer already rejected it manually
+            if (data.status === 'pending') {
+                await storeRef.update({
+                    status: 'approved',
+                    autoApproved: true, // Optional flag to track this
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                console.log(`✅ Store '${data.name}' successfully auto-approved.`);
+
+                // If the user is still on the page, verify them in the UI
+                if (currentStoreData && currentStoreData.slug === storeSlug) {
+                    currentStoreData.status = 'approved';
+                    showNotification('🎉 Your store has been automatically approved!');
+                    // Refresh dashboard if active
+                    if (document.getElementById('store-admin-page').classList.contains('active')) {
+                        loadVendorDashboard();
+                    }
+                }
+            } else {
+                console.log(`ℹ️ Auto-approval skipped. Store status is currently: ${data.status}`);
+            }
+        } catch (error) {
+            console.error("❌ Auto-approval failed:", error);
+        }
+    }, 120000);
+}
+// --- Send Store Approval Notification to Admin ---
+async function sendApprovalNotification(storeName, ownerName, ownerEmail, storeSlug) {
+    try {
+        console.log(`📧 Sending admin notification for: ${storeName}`);
+
+        // Using Web3Forms (since you already have the API key configured)
+        await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                access_key: WEB3FORMS_API_KEY,
+                from_name: 'MarketSpace System',
+                subject: `🆕 New Store Waiting: ${storeName}`,
+                to_email: DEVELOPER_EMAIL,
+                message: `
+                    A new store has been registered and is pending approval.
+                    
+                    Store Name: ${storeName}
+                    Store URL: ${storeSlug}
+                    Owner: ${ownerName}
+                    Email: ${ownerEmail}
+                    
+                    Please login to the Developer Dashboard to approve it.
+                `
+            })
+        });
+        console.log('✅ Notification sent to admin.');
+    } catch (error) {
+        // We log the error but don't stop the app, so the user still sees "Success"
+        console.warn('⚠️ Failed to send admin email (non-fatal):', error);
+    }
+}
+// --- FORCE ALPHANUMERIC ONLY FOR STORE URL INPUT ---
+document.addEventListener('DOMContentLoaded', () => {
+    const regUrlInput = document.getElementById('reg-store-url');
+    if (regUrlInput) {
+        regUrlInput.addEventListener('input', function (e) {
+            // Store current cursor position (optional, for better UX)
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+
+            // Replace any char that is NOT (a-z, A-Z, or 0-9)
+            // This regex removes spaces, symbols, punctuation, emojis, etc.
+            const cleaned = this.value.replace(/[^a-zA-Z0-9]/g, '');
+
+            if (this.value !== cleaned) {
+                this.value = cleaned;
+                // Optional: Restore cursor position
+                this.setSelectionRange(start - 1, end - 1);
+
+                // Optional: Show subtle warning
+                // showNotification('Only letters and numbers allowed in URL'); 
+            }
+        });
+    }
+});
+// --- SMART VENDOR NOTIFICATION LOGIC ---
+
+function checkVendorThemeStatus() {
+    // 1. Safety check: must be a vendor and data must exist
+    if (!currentUser || userRole !== 'vendor' || !currentStoreData) return;
+
+    // 2. THE CRITICAL CHECK: 
+    // If they already use 'image' theme OR have a URL saved, STOP HERE.
+    if (currentStoreData.themeType === 'image' || (currentStoreData.backgroundImageUrl && currentStoreData.backgroundImageUrl !== "")) {
+        console.log("Vendor already has a custom image theme. Skipping prompt.");
+        return;
+    }
+
+    // 3. Prevent annoying repeats: Only show once per login session
+    if (sessionStorage.getItem('notified_image_theme')) return;
+
+    // 4. Show the stylish modal
+    const modal = document.getElementById('vendor-image-prompt-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        sessionStorage.setItem('notified_image_theme', 'true');
+    }
+}
+
+function closeVendorImagePrompt() {
+    document.getElementById('vendor-image-prompt-modal').style.display = 'none';
+}
+
+function goToSettingsForImage() {
+    closeVendorImagePrompt();
+    // Navigate to Admin and open Settings tab
+    navigateTo('store-admin');
+    setTimeout(() => {
+        showAdminTab('settings');
+        // Scroll to the theme selection area
+        const themeSection = document.querySelector('.settings-section');
+        if (themeSection) themeSection.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+}
+// --- RESTRICT OTHER CATEGORY INPUT (One Word, Max 20 Chars) ---
+document.addEventListener('DOMContentLoaded', () => {
+    const otherCatInput = document.getElementById('reg-store-category-other');
+
+    if (otherCatInput) {
+        otherCatInput.addEventListener('input', function () {
+            // Store current value
+            const originalValue = this.value;
+
+            // 1. Remove all spaces (enforces one word)
+            // 2. Slice to 20 characters (backup for HTML maxlength)
+            const cleanValue = originalValue.replace(/\s/g, '').slice(0, 20);
+
+            // Only update if changes were made (prevents cursor jumping unnecessarily)
+            if (originalValue !== cleanValue) {
+                this.value = cleanValue;
+
+                // Optional: notify the user if they tried to type a space
+                if (originalValue.includes(' ')) {
+                    // Assuming showNotification is available globally from your main.js
+                    showNotification('⚠️ Category must be one word only.');
+                }
+            }
+        });
+    }
+});
+// --- DEVELOPER DASHBOARD SEARCH LOGIC ---
+
+// 1. Define global cache
+let devAllStoresCache = [];
+
+// 2. Refactored Rendering Function (Updated for Scrollability)
+function renderDevAllStores(stores) {
+    const container = document.getElementById('dev-all-stores');
+    if (!container) return;
+
+    if (stores.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:var(--gray); padding:20px;">No stores found matching your search.</p>';
+        return;
+    }
+
+    // UPDATED: Added a wrapper div with max-height and overflow-y: auto
+    let html = `
+        <div style="max-height: 500px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <table class="stores-table" style="width: 100%; border-collapse: collapse;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <tr>
+                        <th style="padding: 12px;">Store Name</th>
+                        <th style="padding: 12px;">Owner</th>
+                        <th style="padding: 12px;">Status</th>
+                        <th style="padding: 12px;">Category</th>
+                        <th style="padding: 12px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    stores.forEach(item => {
+        const storeData = item.data;
+        const ownerName = item.ownerName || 'Unknown';
+        const safeId = item.id.replace(/'/g, "\\'");
+        const safeName = (storeData.name || '').replace(/'/g, "\\'");
+
+        let statusClass = 'status-rejected';
+        if (storeData.status === 'approved') statusClass = 'status-approved';
+        else if (storeData.status === 'pending') statusClass = 'status-pending';
+        else if (storeData.status === 'deleted') statusClass = 'status-deleted';
+
+        const isUnlimited = storeData.unlimitedProducts === true;
+        const prodCount = storeData.productCount || 0;
+
+        html += `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td data-label="Store Name" style="padding: 12px;">
+                    <div style="font-weight:600;">${storeData.name}</div>
+                    ${isUnlimited ? '<span style="font-size:0.75rem; background:#7c3aed; color:white; padding:2px 6px; border-radius:4px; display:inline-block; margin-top:2px;"><i class="fas fa-infinity"></i> Unlimited</span>' : ''}
+                    <div style="font-size: 0.75rem; color: var(--gray); margin-top: 2px;">${prodCount} Products</div>
+                </td>
+                <td data-label="Owner" style="padding: 12px;">${ownerName}</td>
+                <td data-label="Status" style="padding: 12px;">
+                    <span class="store-status-badge ${statusClass}">
+                        ${(storeData.status || 'pending').toUpperCase()}
+                    </span>
+                </td>
+                <td data-label="Category" style="padding: 12px;">${storeData.category}</td>
+                <td data-label="Actions" style="padding: 12px;">
+                    <div class="action-buttons" style="display:flex; flex-direction:column; gap:5px;">
+                        ${storeData.status === 'deleted'
+                ? '<span style="color:var(--gray); font-size:0.8rem;"><i>Archived</i></span>'
+                : `<button onclick="deleteStoreAdmin('${safeId}')" class="btn-remove" style="width:100%">Delete Store</button>`
+            }
+                        <button onclick="window.open(generateStoreUrl('${storeData.slug}'), '_blank')" class="btn btn-primary">Open Store</button>
+                        ${isUnlimited && storeData.status !== 'deleted'
+                ? `<button onclick="revokeUnlimitedAccess('${safeId}', '${safeName}')" class="btn-reject" style="width:100%; font-size:0.75rem; padding:4px;">
+                                 <i class="fas fa-ban"></i> Revoke Unlimited
+                               </button>`
+                : ''
+            }
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    html += '</tbody></table></div>'; // Close wrapper div
+    container.innerHTML = html;
+}
+// 3. Search Function
+function filterDevStores() {
+    const input = document.getElementById('dev-store-search');
+    if (!input) return;
+
+    const term = input.value.toLowerCase().trim();
+
+    if (!term) {
+        renderDevAllStores(devAllStoresCache);
+        return;
+    }
+
+    const filtered = devAllStoresCache.filter(item => {
+        const name = (item.data.name || '').toLowerCase();
+        const owner = (item.ownerName || '').toLowerCase();
+        const category = (item.data.category || '').toLowerCase();
+        const slug = (item.data.slug || '').toLowerCase();
+
+        return name.includes(term) || owner.includes(term) || category.includes(term) || slug.includes(term);
+    });
+
+    renderDevAllStores(filtered);
+}
+
+// 4. Update the existing loadDevStats function
+// REPLACE your existing loadDevStats function with this updated version
+async function loadDevStats() {
+    if (userRole !== 'developer') return;
+
+    // Load sub-sections
+    if (typeof loadVerificationRequests === 'function') loadVerificationRequests();
+    if (typeof loadVerifiedStoresAdmin === 'function') loadVerifiedStoresAdmin();
+    loadUnlimitedRequests();
+
+    try {
+        // Fetch all data
+        const [usersSnap, allStoresSnap, pendingStoresSnap] = await Promise.all([
+            db.collection('users').get(),
+            db.collection('stores').get(),
+            db.collection('stores').where('status', '==', 'pending').get()
+        ]);
+
+        // Update Stat Cards
+        document.getElementById('dev-total-users').textContent = usersSnap.size;
+        document.getElementById('dev-total-stores').textContent = allStoresSnap.size;
+        document.getElementById('dev-pending-approvals').textContent = pendingStoresSnap.size;
+
+        // --- OPTIMIZATION: Create User Map for O(1) Lookup ---
+        const userMap = {};
+        usersSnap.forEach(doc => {
+            userMap[doc.id] = doc.data().name || 'Unknown';
+        });
+
+        // --- POPULATE CACHE FOR SEARCH ---
+        devAllStoresCache = []; // Reset cache
+
+        // Process stats & build cache simultaneously
+        let activeStoresCount = 0;
+        let prolificStores = [];
+
+        allStoresSnap.forEach(doc => {
+            const data = doc.data();
+            const count = data.productCount || 0;
+
+            if (count > 0) activeStoresCount++;
+            if (count > 2) prolificStores.push({ name: data.name, count: count });
+
+            // Add to cache
+            devAllStoresCache.push({
+                id: doc.id,
+                data: data,
+                ownerName: userMap[data.ownerId] || 'Unknown' // Instant lookup
+            });
+        });
+
+        // Render "All Stores" Table using the new function
+        renderDevAllStores(devAllStoresCache);
+
+        // Update Active Stores UI
+        const activeCountEl = document.getElementById('dev-active-stores-count');
+        if (activeCountEl) activeCountEl.textContent = activeStoresCount;
+
+        // Update Top Contributors
+        const listContainer = document.getElementById('dev-prolific-stores-list');
+        if (listContainer) {
+            if (prolificStores.length === 0) {
+                listContainer.innerHTML = '<p style="color: var(--gray); font-style: italic; padding: 10px;">No stores found with more than 2 products.</p>';
+            } else {
+                prolificStores.sort((a, b) => b.count - a.count);
+                let listHtml = '<ul style="list-style: none; padding: 0; margin: 0;">';
+                prolificStores.forEach(store => {
+                    listHtml += `
+                        <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 600; color: var(--dark); font-size: 0.9rem;">${store.name}</span>
+                            <span style="background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700;">
+                                ${store.count} uploads
+                            </span>
+                        </li>
+                    `;
+                });
+                listHtml += '</ul>';
+                listContainer.innerHTML = listHtml;
+            }
+        }
+
+        // Render "Pending Approvals" Table (Kept logic inline as it's small)
+        let pendingHtml = '';
+        if (pendingStoresSnap.empty) {
+            pendingHtml = '<div style="padding: 20px; text-align: center; color: var(--gray);">No pending approvals.</div>';
+        } else {
+            pendingHtml = '<table class="stores-table"><thead><tr><th>Store Name</th><th>Owner</th><th>Category</th><th>Actions</th></tr></thead><tbody>';
+            pendingStoresSnap.forEach(doc => {
+                const storeData = doc.data();
+                const ownerName = userMap[storeData.ownerId] || 'Unknown';
+                const safeId = doc.id.replace(/'/g, "\\'");
+
+                pendingHtml += `
+                    <tr>
+                        <td data-label="Store Name">${storeData.name}</td>
+                        <td data-label="Owner">${ownerName}</td>
+                        <td data-label="Category">${storeData.category}</td>
+                        <td data-label="Actions">
+                            <div class="action-buttons">
+                                <button onclick="approveStore('${safeId}')" class="btn-approve">Approve</button>
+                                <button onclick="rejectStore('${safeId}')" class="btn-reject">Reject</button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+            pendingHtml += '</tbody></table>';
+        }
+        document.getElementById('dev-pending-stores').innerHTML = pendingHtml;
+
+        // Render Users List
+        let usersHtml = '<ul style="list-style:none; margin:0; padding:0;">';
+        // Sort users in memory since we already fetched them, or fetch limit 10 separately
+        // For efficiency, let's just use the first 10 from the snapshot we have, or re-fetch recent if strictly needed.
+        // Keeping original logic of separate fetch for "Recent Users" to ensure order
+        const recentUsers = await db.collection('users').orderBy('createdAt', 'desc').limit(10).get();
+
+        recentUsers.forEach(doc => {
+            const u = doc.data();
+            const userId = doc.id;
+            const isMe = currentUser && currentUser.uid === userId;
+            const deleteButton = isMe
+                ? `<span style="font-size:0.8rem; color:#ccc;">(You)</span>`
+                : `<button onclick="deleteUserAdmin('${userId}')" class="btn-delete" style="padding: 6px 10px; font-size: 0.8rem;" title="Delete User"><i class="fas fa-trash"></i></button>`;
+
+            usersHtml += `
+            <li style="padding:12px; border-bottom:1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div style="overflow: hidden;">
+                    <strong style="display:block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${u.name}</strong>
+                    <span style="color:var(--gray); font-size:0.85rem; display:block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${u.email}</span>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center; flex-shrink: 0;">
+                    <span class="store-status-badge status-approved" style="background: #e0e7ff; color: var(--primary); font-size: 0.75rem;">${u.role}</span>
+                    ${deleteButton}
+                </div>
+            </li>`;
+        });
+        usersHtml += '</ul>';
+        document.getElementById('dev-user-list').innerHTML = usersHtml;
+
+    } catch (e) {
+        console.error('Error loading developer stats:', e);
+        showNotification('Error loading developer stats.', 'error');
     }
 }

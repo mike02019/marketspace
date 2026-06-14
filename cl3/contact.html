@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="modello.logo.png" type="image/x-icon">
+    <title>Modello | Contact Us</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <img src="modello.logo.png" alt="Modello">
+            </a>
+
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav id="main-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="team.html">Team</a></li>
+                    <li><a href="reviews.html">Reviews</a></li>
+                    <li><a href="careers.html">Careers</a></li>
+                    <li><a href="contact.html">Contact Us</a></li>
+                </ul>
+            </nav>
+
+            <!-- Add this inside the header-actions div in index.html -->
+            <div class="notification-indicator">
+                <a href="updates.html" class="notification-link" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </a>
+            </div>
+
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="contact-page">
+
+        <div class="section-header">
+            <h2>Our Offices</h2>
+            <p>You're always welcome - We're here to help! If you have any questions, need more information, or
+                just want to share your feedback with us, don't hesitate to reach out. Our team is dedicated to
+                providing you with the support you need in a timely and friendly manner.</p>
+        </div>
+
+
+
+
+        <section class="section">
+            <div class="container">
+                <div class="services-grid">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h3>Main Office</h3>
+                        <p>Ejisu-Kumasi road, Adako Jachie, Near Prefos Limited</p>
+                        <p><strong>Customer care:</strong> +233547986097</p>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h3>Kumasi Branch</h3>
+                        <p>Ahinsan, GCB Lane, Kumasi</p>
+                        <p><strong>Customer care:</strong> +233547986097</p>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h3>Accra Branch</h3>
+                        <p>Ashaley Botwe, University Avenue, Lakeside Estate, Accra</p>
+                        <p><strong>Customer care:</strong> +233547986097</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" style="background-color: var(--light);">
+            <div class="container">
+                <div class="form-container">
+                    <h2 style="text-align: center; margin-bottom: 2rem;">Send Us a Message</h2>
+                    <form id="contact-form" method="POST">
+                        <input type="hidden" name="access_key" value="74f3136d-ce26-4912-a41f-51de834079cf">
+
+                        <div class="form-group">
+                            <label for="contact_name">Your Name</label>
+                            <input type="text" id="contact_name" name="name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_email">Email Address</label>
+                            <input type="email" id="contact_email" name="email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_phone">Phone Number</label>
+                            <input type="tel" id="contact_phone" name="phone">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_subject">Subject</label>
+                            <input type="text" id="contact_subject" name="subject" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_message">Your Message</label>
+                            <textarea id="contact_message" name="message" rows="5" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn">Send Message <i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+        </section>
+        <div class="animation-container">
+            <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module"></script>
+            <dotlottie-wc src="https://lottie.host/9d1bf203-0696-4420-b538-65b5b2a9b987/Jl793QHnaX.lottie"
+                style="width: 100%; max-width: 800px;" autoplay loop></dotlottie-wc>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Modello Services</h3>
+                    <p>Premium building maintenance services for modern living. We deliver exceptional results with
+                        professional expertise since 2018.</p>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/modelloghana/?_rdc=1&_rdr#"><i
+                                class="fab fa-facebook-f"></i></a>
+                        <a href="https://x.com/modelloghana"><i class="fab fa-twitter"></i></a>
+                        <a href="https://www.instagram.com/modelloghana/#"><i class="fab fa-instagram"></i></a>
+                        <a href=""><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="team.html">Team</a></li>
+                        <li><a href="reviews.html">Reviews</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                    </nav>
+
+                </div>
+                <div class="footer-column">
+                    <h3>Services</h3>
+                    <ul>
+                        <li><a href="services.html">Industrial Cleaning</a></li>
+                        <li><a href="services.html">Domestic/Commercial Cleaning</a></li>
+                        <li><a href="services.html">Apartment Cleaning</a></li>
+                        <li><a href="services.html">Sofa Cleaning</a></li>
+                        <li><a href="services.html">Mattress Cleaning</a></li>
+                        <li><a href="services.html">Carpet Cleaning</a></li>
+                        <li><a href="services.html">Pest Control & Fumigation Service</a></li>
+                        <li><a href="services.html">Gardening, Beautification & Landscaping Services</a>
+                        </li>
+                        <li><a href="services.html">Building Maintenance (Renovation Services)</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Ejisu-Kumasi road, Adako Jachie, Near Prefos Limited
+                        </li>
+                        <li><i class="fas fa-phone"></i> +233547986097</li>
+                        <li><i class="fas fa-envelope"></i> info@modellogh.com</li>
+                        <li><i class="fas fa-clock"></i> Mon - Fri: 8am - 6pm</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2018 Modello Building Maintenance Services. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contactForm = document.getElementById('contact-form');
+            if (contactForm) {
+                const submitBtn = contactForm.querySelector('button[type="submit"]');
+                const submitBtnHtml = submitBtn.innerHTML;
+
+                contactForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    const accessKey = contactForm.querySelector('input[name="access_key"]').value;
+                    if (!accessKey) {
+                        alert("Form error: Access key is missing.");
+                        return;
+                    }
+
+                    // Show a loading state
+                    submitBtn.innerHTML = 'Sending... <i class="fas fa-spinner fa-spin"></i>';
+                    submitBtn.disabled = true;
+
+                    const formData = new FormData(contactForm);
+                    const object = Object.fromEntries(formData);
+                    const json = JSON.stringify(object);
+
+                    fetch('https://api.web3forms.com/submit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: json
+                    })
+                        .then(async (response) => {
+                            let jsonResponse = await response.json();
+                            if (response.status == 200) {
+                                alert('Success! Your message has been sent.');
+                                contactForm.reset();
+                            } else {
+                                console.log(response);
+                                alert(`Error: ${jsonResponse.message}`);
+                            }
+                        })
+                        .catch(error => {
+                            console.log(error);
+                            alert('An error occurred while sending your message.');
+                        })
+                        .finally(() => {
+                            // Reset button
+                            submitBtn.innerHTML = submitBtnHtml;
+                            submitBtn.disabled = false;
+                        });
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

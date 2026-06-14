@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications | Modello Building Maintenance</title>
+    <link rel="icon" href="modello.logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <img src="modello.logo.png" alt="Modello">
+            </a>
+
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav id="main-nav">
+                <ul>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="team.html">Team</a></li>
+                        <li><a href="reviews.html">Reviews</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+            </nav>
+
+            <!-- Add this inside the header-actions div in index.html -->
+            <div class="notification-indicator">
+                <a href="updates.html" class="notification-link" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </a>
+            </div>
+
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="section-header">
+            <p>Stay updated with our latest offers, promotions, and news</p>
+        </div>
+        <section class="page-header">
+            <div class="container">
+                <h1>Notifications 🔔</h1>
+                <p>Stay updated with our latest offers, promotions, and news</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="notification-controls">
+                    <button class="btn btn-outline" id="mark-all-read">
+                        <i class="fas fa-check-double"></i> Mark All as Read
+                    </button>
+                    <div class="notification-filter">
+                        <select id="notification-filter">
+                            <option value="all">All Notifications</option>
+                            <option value="promotions">Promotions</option>
+                            <option value="updates">Updates</option>
+                            <option value="fliers">Fliers</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="notifications-container">
+                    <div class="notification-category">
+                        <h2><i class="fas fa-tag"></i> Special Promotions</h2>
+                        <div class="notification-grid">
+                            <div class="notification-card promotion new">
+                                <div class="notification-badge-new">NEW</div>
+                                <div class="notification-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <h3>Spring Cleaning Special! 🌸</h3>
+                                    <p>Save <b> GHC 1,5000! <br>This Month. </b> Book <b>Event cleaning + Mobile luxury
+                                            Restroom </b> together and enjoy a discount of <b>GHC1,500!</b> offer valid
+                                        till <b>December 7th</b> </p>
+                                    <div class="notification-meta">
+                                        <span class="notification-date">2 hours ago</span>
+                                        <span class="notification-type">Promotion</span>
+                                    </div>
+                                </div>
+                                <div class="notification-action">
+                                    <button class="btn btn-small">Available</button>
+                                </div>
+                            </div>
+
+                            <div class="notification-card promotion">
+                                <div class="notification-icon">
+                                    <i class="fas fa-gift"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <h3>Referral Bonus Program 🎁</h3>
+                                    <p>Refer a friend and get <b>Discount </b> credit on your next service.</p>
+                                    <div class="notification-meta">
+                                        <span class="notification-date">available</span>
+                                        <span class="notification-type">Promotion</span>
+                                    </div>
+                                </div>
+                                <div class="notification-action">
+                                    <button class="btn btn-small">Available</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="notification-category">
+                        <h2><i class="fas fa-sync-alt"></i> Service Updates</h2>
+                        <div class="notification-grid">
+                            <div class="notification-card update new">
+                                <div class="notification-badge-new">NEW</div>
+                                <div class="notification-icon">
+                                    <i class="fas fa-broom"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <h3><b>Small Event , Big Clean Result</b></h3>
+                                    <p>Perfect for <b>Birthdays , Engagement or Small Family Gatherings</b>Including
+                                        Pre-event and post-event cleaning </p>
+                                    <div class="notification-meta">
+                                        <span class="notification-date">5 hours ago</span>
+                                        <span class="notification-type">Update</span>
+                                    </div>
+                                </div>
+                                <div class="notification-action">
+                                    <a href="bk.html"><button class="btn btn-small">Explore</button></a>
+                                </div>
+                            </div>
+
+                            <div class="notification-card update">
+                                <div class="notification-icon">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <h3> Welcome to the <b>Smart Pricing Era!</b> </h3>
+                                    <p>Now pay for your event cleaning base on your <b>space size (squ)</b> and number
+                                        of guest not one fix price! <b>Fair , Flexible</b>and made for everyone </p>
+                                    <div class="notification-meta">
+                                        <span class="notification-date">Available</span>
+                                        <span class="notification-type">Update</span>
+                                    </div>
+                                </div>
+                                <div class="notification-action">
+                                    <a href="pricing.html"><button class="btn btn-small">Explore Pricing </button></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="notification-category flyers-section">
+                        <div class="flyers-header-wrap">
+                            <div>
+                                <h2><i class="fas fa-images"></i> Gallery & Flyers</h2>
+                                <p class="flyers-subtitle">Browse our latest events, offers, and service showcases</p>
+                            </div>
+                            <div class="gallery-controls-mini">
+                                <button class="nav-btn prev-gallery"><i class="fas fa-arrow-left"></i></button>
+                                <button class="nav-btn next-gallery"><i class="fas fa-arrow-right"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="gallery-perspective">
+                            <div class="gallery-track" id="gallery-track">
+
+                                <div class="gallery-card active">
+                                    <img src="image/pic6.jpg" alt="Event Flyer">
+                                    <div class="gallery-overlay">
+                                        <div class="gallery-info">
+                                            <h3>November Call!</h3>
+                                            <p>Medolloghana November Calls For A Tidy Touch-stay</p>
+                                        </div>
+                                        <button class="gallery-btn" onclick="openLightbox(this)">
+                                            <i class="fas fa-expand"></i> View Full Size
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="gallery-card">
+                                    <img src="image/pic5.jpg" alt="Service Menu">
+                                    <div class="gallery-overlay">
+                                        <div class="gallery-info">
+                                            <h3>Save GHC1500 This Month!</h3>
+                                            <p>Book Event cleaning + Mobile luxury
+                                                Restroom together and enjoy a discount offer valid
+                                                till December 7th </p>
+                                        </div>
+                                        <button class="gallery-btn" onclick="openLightbox(this)">
+                                            <i class="fas fa-expand"></i> View Full Size
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="gallery-card">
+                                    <img src="image/pic4.jpg" alt="pic">
+                                    <div class="gallery-overlay">
+                                        <div class="gallery-info">
+                                            <h3>Breast Cancer Awareness!</h3>
+                                            <p>Today marks the end of Breast Cancer Awareness Month but not the end of
+                                                the fight. Together, we stay strong, stay aware, and stand with every
+                                                warrior. 💪🎀.</p>
+                                        </div>
+                                        <button class="gallery-btn" onclick="openLightbox(this)">
+                                            <i class="fas fa-expand"></i> View Full Size
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="gallery-card">
+                                    <img src="image/pic7.jpg" alt="Carpet Cleaning">
+                                    <div class="gallery-overlay">
+                                        <div class="gallery-info">
+                                            <h3>Smart Pricing Era!</h3>
+                                            <p>Welcome to Modello’s Smart Pricing Era!
+                                                Pay only for the space you use and guests you host — fair, flexible, and
+                                                made for everyone. Call us on 0241688813 or 0544938851.</p>
+                                        </div>
+                                        <button class="gallery-btn" onclick="openLightbox(this)">
+                                            <i class="fas fa-expand"></i> View Full Size
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="gallery-card">
+                                    <img src="image/pic8.jpg" alt="Guide">
+                                    <div class="gallery-overlay">
+                                        <div class="gallery-info">
+                                            <h3>Small Event , Big Clean Result</h3>
+                                            <p>Perfect fit for every occasion. Whether pre-event, on site event cleaning
+                                                or post event cleaning, kindly reach out to us. Made to suit you ❤️.</p>
+                                        </div>
+                                        <button class="gallery-btn" onclick="openLightbox(this)">
+                                            <i class="fas fa-expand"></i> View Full Size
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="gallery-card">
+                                    <img src="image/pic2.jpg" alt="Guide">
+                                    <div class="gallery-overlay">
+                                        <div class="gallery-info">
+                                            <h3>Site Supervisors Needed 🚨.</h3>
+                                            <p>Kindly send your CVs to
+                                                recruitment@modellogh.com
+                                                .</p>
+                                        </div>
+                                        <button class="gallery-btn" onclick="openLightbox(this)">
+                                            <i class="fas fa-expand"></i> View Full Size
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="gallery-card">
+                                    <img src="image/pic3.jpg" alt="Guide">
+                                    <div class="gallery-overlay">
+                                        <div class="gallery-info">
+                                            <h3>Quality Control Officers Wanted 🚨🚨🚨</h3>
+                                            <p>We’re hiring experienced Quality Control Officers for locations around
+                                                Spintex and East Legon.
+                                                ✅ Must have experience in Facility Maintenance
+                                                🎓 Minimum qualification: HND or University Degree</p>
+                                        </div>
+                                        <button class="gallery-btn" onclick="openLightbox(this)">
+                                            <i class="fas fa-expand"></i> View Full Size
+                                        </button>s
+                                    </div>
+                                </div>
+
+                                <div class="gallery-card">
+                                    <img src="image/pic9.jpg" alt="Guide">
+                                    <div class="gallery-overlay">
+                                        <div class="gallery-info">
+                                            <h3>From dust to deluxe 💎</h3>
+                                            <p> Modello left no trace but perfection. Client
+                                                approved ✅ #CleanSpaceHappyFaces” #breastcancerawarenessmonth #modello
+                                                #cleaningmotivation</p>
+                                        </div>
+                                        <button class="gallery-btn" onclick="openLightbox(this)">
+                                            <i class="fas fa-expand"></i> View Full Size
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="notification-category">
+                        <h2><i class="fas fa-chart-line"></i> Budget & Pricing Updates</h2>
+                        <div class="notification-grid">
+                            <div class="notification-card budget">
+                                <div class="notification-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <h3>New Budget-Friendly Packages 💰</h3>
+                                    <p>We've introduced new maintenance packages starting from just GHS 150/month.</p>
+                                    <div class="budget-highlight">
+                                        <span class="budget-amount">Starting at GHS 150/month</span>
+                                    </div>
+                                    <div class="notification-meta">
+                                        <span class="notification-date">2 weeks ago</span>
+                                        <span class="notification-type">Budget</span>
+                                    </div>
+                                </div>
+                                <div class="notification-action">
+                                    <button class="btn btn-small">View Plans</button>
+                                </div>
+                            </div>
+
+                            <div class="notification-card budget">
+                                <div class="notification-icon">
+                                    <i class="fas fa-piggy-bank"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <h3>Seasonal Discount Alert 🏷️</h3>
+                                    <p>Save up to 25% on annual maintenance contracts booked this month.</p>
+                                    <div class="budget-highlight">
+                                        <span class="budget-amount">Save up to 25%</span>
+                                    </div>
+                                    <div class="notification-meta">
+                                        <span class="notification-date">3 weeks ago</span>
+                                        <span class="notification-type">Budget</span>
+                                    </div>
+                                </div>
+                                <div class="notification-action">
+                                    <button class="btn btn-small">Get Quote</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta" style="background: linear-gradient(135deg, #8338ec 0%, #3a86ff 100%);">
+            <div class="container">
+                <h2>Never Miss an Update!</h2>
+                <p>Subscribe to our newsletter and get the latest promotions and service updates directly in your inbox.
+                </p>
+                <div class="newsletter-subscription">
+                    <input type="email" placeholder="Enter your email address" class="newsletter-input">
+                    <button class="btn">Subscribe Now</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Modello Services</h3>
+                    <p>Premium building maintenance services for modern living. We deliver exceptional results with
+                        professional expertise and sustainable practices.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="team.html">Team</a></li>
+                        <li><a href="reviews.html">Reviews</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                        <li><a href="updates.html">Notifications</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Services</h3>
+                    <ul>
+                        <li><a href="services.html">Industrial Cleaning</a></li>
+                        <li><a href="services.html">Domestic/Commercial Cleaning</a></li>
+                        <li><a href="services.html">Apartment Cleaning</a></li>
+                        <li><a href="services.html">Sofa Cleaning</a></li>
+                        <li><a href="services.html">Mattress Cleaning</a></li>
+                        <li><a href="services.html">Carpet Cleaning</a></li>
+                        <li><a href="services.html">Pest Control & Fumigation Service</a></li>
+                        <li><a href="services.html">Gardening, Beautification & Landscaping Services</a></li>
+                        <li><a href="services.html">Building Maintenance (Renovation Services)</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Ejisu-Kumasi road, Adako Jachie, Near Prefos Limited
+                        </li>
+                        <li><i class="fas fa-map-marker-alt"></i> Ahinsan, GCB Lane, Kumasi</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Ashaley Botwe, University Avenue, Accra</li>
+                        <li><i class="fas fa-phone"></i> +233 54 493 8851 / +233 24 168 8813</li>
+                        <li><i class="fas fa-envelope"></i> info@modellogh.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2018 Modello Building Maintenance Services. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close"><i class="fas fa-times"></i></button>
+        <img src="" alt="Full View" class="lightbox-img" id="lightbox-img">
+    </div>
+
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mainNav = document.getElementById('main-nav');
+
+        if (mobileMenuBtn && mainNav) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mainNav.classList.toggle('active');
+                if (mainNav.classList.contains('active')) {
+                    mobileMenuBtn.style.display = 'none';
+                } else {
+                    mobileMenuBtn.style.display = 'flex';
+                }
+            });
+
+            mainNav.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A' && mainNav.classList.contains('active')) {
+                    mainNav.classList.remove('active');
+                    mobileMenuBtn.style.display = 'flex';
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                const isMenuOpen = mainNav.classList.contains('active');
+                const isClickInsideNav = mainNav.contains(e.target);
+                const isClickOnMenuBtn = mobileMenuBtn.contains(e.target);
+                if (isMenuOpen && !isClickInsideNav && !isClickOnMenuBtn) {
+                    mainNav.classList.remove('active');
+                    mobileMenuBtn.style.display = 'flex';
+                }
+            });
+        }
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+
+        if (themeToggle) {
+            const savedTheme = localStorage.getItem('modello-theme') || 'light';
+
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggle.querySelector('i').classList.remove('fa-moon');
+                themeToggle.querySelector('i').classList.add('fa-sun');
+            }
+
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-theme');
+                const icon = themeToggle.querySelector('i');
+
+                if (document.body.classList.contains('dark-theme')) {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                    localStorage.setItem('modello-theme', 'dark');
+                } else {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                    localStorage.setItem('modello-theme', 'light');
+                }
+            });
+        }
+
+        // Notification page specific JavaScript
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mark all as read functionality
+            const markAllReadBtn = document.getElementById('mark-all-read');
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', function () {
+                    const newNotifications = document.querySelectorAll('.notification-badge-new');
+                    newNotifications.forEach(badge => {
+                        badge.style.display = 'none';
+                    });
+
+                    const newCards = document.querySelectorAll('.notification-card.new');
+                    newCards.forEach(card => {
+                        card.classList.remove('new');
+                    });
+
+                    // Update the badge count in header
+                    const headerBadge = document.querySelector('.notification-badge');
+                    if (headerBadge) {
+                        headerBadge.textContent = '0';
+                        headerBadge.style.display = 'none';
+                    }
+
+                    // Show confirmation
+                    alert('All notifications marked as read!');
+                });
+            }
+
+            // Filter functionality
+            const notificationFilter = document.getElementById('notification-filter');
+            if (notificationFilter) {
+                notificationFilter.addEventListener('change', function () {
+                    const filterValue = this.value;
+                    const categories = document.querySelectorAll('.notification-category');
+
+                    categories.forEach(category => {
+                        // Exclude the flyers/gallery section from the filter based on the class 'flyers-section'
+                        if (category.classList.contains('flyers-section')) {
+                            if (filterValue === 'all' || filterValue === 'fliers') {
+                                category.style.display = 'block';
+                            } else {
+                                category.style.display = 'none';
+                            }
+                            return;
+                        }
+
+                        if (filterValue === 'all') {
+                            category.style.display = 'block';
+                        } else {
+                            const categoryTypeElement = category.querySelector('h2 i');
+                            if (categoryTypeElement) {
+                                const categoryType = categoryTypeElement.className;
+                                if (
+                                    (filterValue === 'promotions' && categoryType.includes('fa-tag')) ||
+                                    (filterValue === 'updates' && categoryType.includes('fa-sync-alt'))
+                                ) {
+                                    category.style.display = 'block';
+                                } else {
+                                    category.style.display = 'none';
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+
+            // --- NEW GALLERY AND LIGHTBOX LOGIC ---
+            const track = document.getElementById('gallery-track');
+            const prevBtn = document.querySelector('.prev-gallery');
+            const nextBtn = document.querySelector('.next-gallery');
+
+            // Lightbox Elements
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const lightboxClose = document.getElementById('lightbox-close');
+
+            // Scroll Navigation
+            if (track && prevBtn && nextBtn) {
+                prevBtn.addEventListener('click', () => {
+                    // Scroll 340px (320px card width + 20px gap approx)
+                    track.scrollBy({ left: -340, behavior: 'smooth' });
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    track.scrollBy({ left: 340, behavior: 'smooth' });
+                });
+            }
+
+            // Lightbox Function (Global scope to work with onclick in HTML)
+            window.openLightbox = function (btnElement) {
+                // Find the image in the same card as the button
+                const card = btnElement.closest('.gallery-card');
+                const img = card.querySelector('img');
+
+                if (img && lightbox && lightboxImg) {
+                    lightboxImg.src = img.src;
+                    lightbox.classList.add('active');
+                    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+                }
+            };
+
+            // Close Lightbox
+            if (lightboxClose) {
+                lightboxClose.addEventListener('click', () => {
+                    lightbox.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                });
+            }
+
+            // Close on background click
+            if (lightbox) {
+                lightbox.addEventListener('click', (e) => {
+                    if (e.target === lightbox) {
+                        lightbox.classList.remove('active');
+                        document.body.style.overflow = 'auto';
+                    }
+                });
+            }
+        });
+
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.1)';
+                header.style.padding = '0.5rem 0';
+            } else {
+                header.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.05)';
+                header.style.padding = '1.2rem 0';
+            }
+        });
+    </script>
+</body>
+
+</html>

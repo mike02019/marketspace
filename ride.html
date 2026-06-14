@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery | MarketSpace</title>
-4    <link rel="icon" href="icon.png" type="image/x-icon">
+    <link rel="icon" href="icon.png" type="image/x-icon">
 
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Poppins:wght@400;600;700&display=swap"
@@ -37,14 +37,13 @@
                 <div class="logo" onclick="navigateTo('home')" aria-label="Home">
                     <img src="logo.png" alt="MarketSpace logo" class="site-logo">
                 </div>
-
                 <div class="nav-links">
-                    <a onclick="navigateTo('home')"><i class="fas fa-home"></i> Home</a>
-                    <a onclick="navigateTo('stores')"><i class="fas fa-store"></i> Stores</a>
-                    <a onclick="navigateTo('products')"><i class="fas fa-box"></i> Products</a>
-                    <a onclick="navigateTo('deals')"><i class="fas fa-tags"></i> Deals</a>
+                    <a href="index.html?page=home"><i class="fas fa-home"></i> Home</a>
+                    <a href="index.html?page=stores"><i class="fas fa-store"></i> Stores</a>
+                    <a href="index.html?page=products"><i class="fas fa-box"></i> Products</a>
+                    <a href="index.html?page=deals"><i class="fas fa-tags"></i> Deals</a>
                     <a href="ride.html"><i class="fas fa-truck-fast"></i>Delivery </a>
-                    <a onclick="navigateTo('cart')" id="cart-icon" style="position: relative;">
+                    <a href="index.html?page=cart" id="cart-icon" style="position: relative;">
                         <i class="fas fa-shopping-cart"></i>
                         <span id="cart-count"
                             style="position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: none; align-items: center; justify-content: center;"></span>
@@ -82,12 +81,12 @@
         <div id="mobile-user-info"></div>
 
         <nav class="mobile-nav-links">
-            <a onclick="closeMobileDrawer(); navigateTo('home')"><i class="fas fa-home"></i> Home</a>
-            <a onclick="closeMobileDrawer(); navigateTo('stores')"><i class="fas fa-store"></i> Stores</a>
-            <a onclick="closeMobileDrawer(); navigateTo('products')"><i class="fas fa-box"></i> Products</a>
-            <a onclick="closeMobileDrawer(); navigateTo('deals')"><i class="fas fa-tags"></i> Deals</a>
+            <a href="index.html?page=home"><i class="fas fa-home"></i> Home</a>
+            <a href="index.html?page=stores"><i class="fas fa-store"></i> Stores</a>
+            <a href="index.html?page=products"><i class="fas fa-box"></i> Products</a>
+            <a href="index.html?page=deals"><i class="fas fa-tags"></i> Deals</a>
             <a href="ride.html"><i class="fas fa-truck-fast"></i> Delivery</a>
-            <a onclick="closeMobileDrawer(); navigateTo('cart')">
+            <a href="index.html?page=cart">
                 <i class="fas fa-shopping-cart"></i> Cart
                 <span id="mobile-cart-badge">0</span>
             </a>

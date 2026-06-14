@@ -30,7 +30,7 @@ The application uses **HTML5, CSS3, and Vanilla JavaScript**, relying on **Googl
 
 * **Frontend**: Native JavaScript (ES6+), DOM Manipulation.
 * **Backend**: Google Firebase (Firestore NoSQL Database, Authentication).
-* **Email Services**:
+* **Email Services**: 
 * **EmailJS**: For transactional order notifications to vendors and customers.
 * **Web3Forms**: For help center tickets and verification alerts.
 

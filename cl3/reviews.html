@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="modello.logo.png" type="image/x-icon">
+    <title>Modello | Reviews</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <img src="modello.logo.png" alt="Modello">
+            </a>
+
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav id="main-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="team.html">Team</a></li>
+                    <li><a href="reviews.html">Reviews</a></li>
+                    <li><a href="careers.html">Careers</a></li>
+                    <li><a href="contact.html">Contact Us</a></li>
+                </ul>
+            </nav>
+
+
+            <div class="notification-indicator">
+                <a href="updates.html" class="notification-link" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </a>
+            </div>
+
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    <main id="reviews-page">
+        <section class="section testimonials">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Customer Testimonials</h2>
+                    <p>Don't just take our word for it. Here's what our satisfied customers have to say about their
+                        experience with Modello.</p>
+                </div>
+                <div class="testimonials-grid">
+                    <div class="testimonial-card">
+                        <div class="stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="testimonial-text">"Modello transformed my home! The team was professional, thorough,
+                            and left everything sparkling clean. I highly recommend their services to anyone looking for
+                            premium cleaning."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">SJ</div>
+                            <div class="author-info">
+                                <h4>Sarah Johnson</h4>
+                                <p>Residential Client</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="testimonial-text">"Our office has never looked better. The commercial cleaning service
+                            is exceptional and our employees appreciate the clean, healthy environment. Highly
+                            professional team!"</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">MC</div>
+                            <div class="author-info">
+                                <h4>Michael Chen</h4>
+                                <p>Business Owner</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="testimonial-text">"I've tried several cleaning services, but Modello stands out for
+                            their attention to detail and eco-friendly approach. Worth every penny! My apartment has
+                            never been cleaner."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">ER</div>
+                            <div class="author-info">
+                                <h4>Emily Rodriguez</h4>
+                                <p>Apartment Resident</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="animation-container" style="height: 300px;">
+                    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js"
+                        type="module"></script>
+                    <dotlottie-wc src="https://lottie.host/87de856e-2352-442e-b40c-6559a7885d2b/iusW5bAzCU.lottie"
+                        style="width: 100%; max-width: 800px;" autoplay loop></dotlottie-wc>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="leave-review" style="background-color: var(--light);">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Leave Your Review</h2>
+                    <p>Had a great experience? We'd love to hear about it. Share your feedback with us!</p>
+                </div>
+
+                <div class="form-container">
+                    <form id="review-form" action="https://api.web3forms.com/submit" method="POST">
+                        <input type="hidden" name="access_key" value="dc02ea23-f7b9-412a-bb56-f9ba4bb35f6e">
+                        <div class="form-group">
+                            <label for="review_name">Your Name</label>
+                            <input type="text" id="review_name" name="review_name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Your Rating</label>
+                            <div class="star-rating" id="star-rating">
+                                <i class="far fa-star" data-value="1"></i>
+                                <i class="far fa-star" data-value="2"></i>
+                                <i class="far fa-star" data-value="3"></i>
+                                <i class="far fa-star" data-value="4"></i>
+                                <i class="far fa-star" data-value="5"></i>
+                            </div>
+                            <input type="hidden" name="rating" id="rating-value" value="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="review_message">Your Review</label>
+                            <textarea id="review_message" name="review_message" rows="5" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn">Submit Review <i class="fas fa-check"></i></button>
+                    </form>
+                </div>
+            </div>
+        </section>
+        <section class="cta">
+            <div class="container">
+                <h2>Ready for a Spotless Space?</h2>
+                <p>Get your free quote today and experience the Modello difference. Transform your home or office with
+                    our premium cleaning services.</p>
+                <a href="booking.html" class="btn">Get Your Quote <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Modello Services</h3>
+                    <p>Premium building maintenance services for modern living. We deliver exceptional results with
+                        professional expertise and sustainable practices.</p>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/modelloghana/?_rdc=1&_rdr#"><i
+                                class="fab fa-facebook-f"></i></a>
+                        <a href="https://x.com/modelloghana"><i class="fab fa-twitter"></i></a>
+                        <a href="https://www.instagram.com/modelloghana/#"><i class="fab fa-instagram"></i></a>
+                        <a href=""><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="team.html">Team</a></li>
+                        <li><a href="reviews.html">Reviews</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                    </nav>
+
+                </div>
+                <div class="footer-column">
+                    <h3>Services</h3>
+                    <ul>
+                        <li><a href="services.html">Industrial Cleaning</a></li>
+                        <li><a href="services.html">Domestic/Commercial Cleaning</a></li>
+                        <li><a href="services.html">Apartment Cleaning</a></li>
+                        <li><a href="services.html">Sofa Cleaning</a></li>
+                        <li><a href="services.html">Mattress Cleaning</a></li>
+                        <li><a href="services.html">Carpet Cleaning</a></li>
+                        <li><a href="services.html">Pest Control & Fumigation Service</a></li>
+                        <li><a href="services.html">Gardening, Beautification & Landscaping Services</a>
+                        </li>
+                        <li><a href="services.html">Building Maintenance (Renovation Services)</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Ejisu-Kumasi road, Adako Jachie, Near Prefos Limited
+                        </li>
+                        <li><i class="fas fa-map-marker-alt"></i> Ahinsan, GCB Lane, Kumasi</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Ashaley Botwe, University Avenue, Accra</li>
+                        <li><i class="fas fa-phone"></i> +233 54 493 8851 / +233 24 168 8813</li>
+                        <li><i class="fas fa-envelope"></i> info@modellogh.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2018 Modello Building Maintenance Services. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+
+    <script type="module">
+        // 1. Import functions from the Firebase CDN
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js';
+
+        // 2. PASTE YOUR FIREBASE CONFIG OBJECT HERE
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtLmMjP9erQryr9-KtSl4MGoDMefjwlXk",
+            authDomain: "filmpluspro-fd8dd.firebaseapp.com",
+            projectId: "filmpluspro-fd8dd",
+            storageBucket: "filmpluspro-fd8dd.firebasestorage.app",
+            messagingSenderId: "533291220327",
+            appId: "1:533291220327:web:d78546974a26ca945203c2",
+            measurementId: "G-GWGRZQ003B"
+        };
+
+        // 3. Initialize Firebase and Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const reviewsCollection = collection(db, "reviews");
+
+        // --- Helper function to create a review card ---
+        const createReviewCard = (name, rating, message) => {
+            const card = document.createElement('div');
+            card.classList.add('testimonial-card');
+
+            let starsHTML = '';
+            for (let i = 0; i < 5; i++) {
+                if (i < rating) {
+                    starsHTML += '<i class="fas fa-star"></i>';
+                } else {
+                    starsHTML += '<i class="far fa-star"></i>';
+                }
+            }
+
+            const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+            card.innerHTML = `
+                <div class="stars">${starsHTML}</div>
+                <p class="testimonial-text">"${message}"</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">${initials}</div>
+                    <div class="author-info">
+                        <h4>${name}</h4>
+                        <p>Customer Review</p>
+                    </div>
+                </div>
+            `;
+            return card;
+        };
+
+        // --- Function to load all reviews from Firestore ---
+        const loadReviews = async () => {
+            const reviewGrid = document.querySelector('.testimonials-grid');
+            if (!reviewGrid) return;
+
+            const q = query(reviewsCollection, orderBy("createdAt", "desc"));
+            const querySnapshot = await getDocs(q);
+
+            querySnapshot.forEach((doc) => {
+                const review = doc.data();
+                const card = createReviewCard(review.name, review.rating, review.message);
+                reviewGrid.appendChild(card);
+            });
+        };
+
+        // --- Run this code when the page is loaded ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadReviews();
+
+            const starWrapper = document.getElementById('star-rating');
+            const reviewForm = document.getElementById('review-form');
+            const ratingInput = document.getElementById('rating-value');
+            let currentRating = 0;
+
+            const setStars = (rating) => {
+                if (!starWrapper) return;
+                const stars = starWrapper.querySelectorAll('i');
+                stars.forEach(star => {
+                    if (star.dataset.value <= rating) {
+                        star.classList.remove('far');
+                        star.classList.add('fas', 'active');
+                    } else {
+                        star.classList.remove('fas', 'active');
+                        star.classList.add('far');
+                    }
+                });
+            }
+
+            // --- Star Rating Logic ---
+            if (starWrapper) {
+                const stars = starWrapper.querySelectorAll('i');
+
+                stars.forEach(star => {
+                    star.addEventListener('click', () => {
+                        currentRating = star.dataset.value;
+                        ratingInput.value = currentRating;
+                        setStars(currentRating);
+                    });
+
+                    star.addEventListener('mouseover', () => setStars(star.dataset.value));
+                });
+
+                starWrapper.addEventListener('mouseout', () => setStars(currentRating));
+            }
+
+            // --- Handle review form submission to FIREBASE ---
+            if (reviewForm) {
+                reviewForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const rating = reviewForm.querySelector('#rating-value').value;
+                    const name = reviewForm.querySelector('#review_name').value;
+                    const message = reviewForm.querySelector('#review_message').value;
+
+                    if (rating === "0") {
+                        alert('Please select a star rating.');
+                        return;
+                    }
+
+                    try {
+                        const docRef = await addDoc(reviewsCollection, {
+                            name: name,
+                            rating: parseInt(rating),
+                            message: message,
+                            createdAt: serverTimestamp()
+                        });
+
+                        const reviewGrid = document.querySelector('.testimonials-grid');
+                        const newCard = createReviewCard(name, rating, message);
+                        reviewGrid.prepend(newCard);
+
+                        alert('Thank you for your review!');
+                        reviewForm.reset();
+                        currentRating = 0;
+                        ratingInput.value = 0;
+                        setStars(0);
+
+                    } catch (error) {
+                        console.error("Error adding document: ", error);
+                        alert('Sorry, there was an error submitting your review.');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
